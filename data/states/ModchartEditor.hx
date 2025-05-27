@@ -46,6 +46,7 @@ public static var CURRENT_XML:Xml;
 	type: "",
 	defaultValue: 0,
 	currentValue: 0,
+	lastValue: -9999
 	property: "",
 	object: null //shader/modifier/whatever idk
 }
@@ -61,6 +62,7 @@ function createTimelineItem(name, type, object) {
 		type: type,
 		defaultValue: 0,
 		currentValue: 0,
+		lastValue: -9999,
 		property: "",
 		object: object
 	}
@@ -77,7 +79,7 @@ function createTimelineItem(name, type, object) {
 
 var easeMap = ["" => function(t) {return t;}];
 
-var eventIndexMap = ["" => 0];
+var eventIndexList = [0];
 var events = [];
 var eventGroup = null;
 var eventGroupContainer = null;
@@ -386,7 +388,7 @@ function postCreate() {
 	for (obj in stage.stageSprites) {
 		obj.cameras = [camGame];
 	}
-	if (stage.stageXML.exists("zoom")) {
+	if (stage.stageXML != null && stage.stageXML.exists("zoom")) {
 		defaultCamZoom = Std.parseFloat(stage.stageXML.get("zoom"));
 	}
 
@@ -880,6 +882,7 @@ function loadEvents(reload) {
 		loadDefaults();
 	}
 
+	
 
 
 	for (list in xml.elementsNamed("Init")) {
@@ -970,22 +973,20 @@ function loadEvents(reload) {
 }
 
 function resetValuesToDefault() {
-
 	for (item in timelineItems) {
 		item.currentValue = item.defaultValue;
-		if (item.type == "shader") {
-			item.object.hset(item.property, item.defaultValue);
-		}
 	}
 }
 
 
 
 function refreshEventTimings() {
-	eventIndexMap.clear();
+	eventIndexList = [];
 
 	for (item in timelineItems) {
 		item.currentValue = item.defaultValue;
+		item.lastValue = -9999;
+		eventIndexList.push(-1);
 	}
 
 	for (i in 0...events.length) {
@@ -994,12 +995,13 @@ function refreshEventTimings() {
 		e.nextIndex = -1;
 		
 		var n = getEventTimelineName(e);
-		e.lastValue = timelineItems[timelineIndexMap.get(n)].currentValue;
+		var itemIndex = timelineIndexMap.get(n);
+		e.lastValue = timelineItems[itemIndex].currentValue;
 
-		if (!eventIndexMap.exists(n)) {
-			eventIndexMap.set(n, i);
+		if (eventIndexList[itemIndex] == -1) {
+			eventIndexList[itemIndex] = i;
 		} else {
-			var lastIndex = eventIndexMap.get(n);
+			var lastIndex = eventIndexList[itemIndex];
 
 			events[lastIndex].nextIndex = i;
 			e.lastIndex = lastIndex;
@@ -1007,7 +1009,7 @@ function refreshEventTimings() {
 			if (events[lastIndex].DI_value != null && events[lastIndex].DI_value)
 				e.lastValue = -e.lastValue;
 
-			eventIndexMap.set(n, i);
+			eventIndexList[itemIndex] = i;
 		}
 	}
 }
@@ -1026,10 +1028,11 @@ function createEventObjects() {
 	}
 }
 
+var lastStep = -9999;
 function updateEvents(?forceStep:Float = null) {
 
 	for (item in timelineItems) {
-		item.currentValue = item.defaultValue;
+		//item.currentValue = item.defaultValue;
 	}
 
 	var currentStep = curStepFloat;
@@ -1038,69 +1041,75 @@ function updateEvents(?forceStep:Float = null) {
 	}
 	if (forceStep != null) currentStep = forceStep;
 
-	for (name => index in eventIndexMap) {
+	for (itemIndex => index in eventIndexList) {
 		var i = index;
-
 		if (events[i] == null) continue;
-		if (!timelineIndexMap.exists(name)) continue;
 
-		//check for next event
-		while(true) {
-			if (events[i].nextIndex == -1) {
-				break;
+		if (lastStep != currentStep) {
+			//check for next event
+			while(true) {
+				if (events[i].nextIndex == -1) {
+					break;
+				}
+				var nextIndex = events[i].nextIndex;
+				if (currentStep >= events[nextIndex].step) {
+					i = nextIndex;
+				} else {
+					break;
+				}
 			}
-			var nextIndex = events[i].nextIndex;
-			if (currentStep >= events[nextIndex].step) {
-				i = nextIndex;
-			} else {
-				break;
-			}
-		}
 
-		//check for last (for rewinding)
-		while(true) {
-			if (events[i].lastIndex == -1) {
-				break;
-			}
-			var lastIndex = events[i].lastIndex;
-			if (currentStep < events[lastIndex].step + (events[lastIndex].time != null ? events[lastIndex].time : 0.0)) {
-				i = lastIndex;
-			} else {
-				break;
+			//check for last (for rewinding)
+			while(true) {
+				if (events[i].lastIndex == -1) {
+					break;
+				}
+				var lastIndex = events[i].lastIndex;
+				if (currentStep < events[lastIndex].step + (events[lastIndex].time != null ? events[lastIndex].time : 0.0)) {
+					i = lastIndex;
+				} else {
+					break;
+				}
 			}
 		}
 
 		if (i != index) {
-			eventIndexMap.set(name, i); //remember
+			eventIndexList[itemIndex] = i;
 		}
 
 		var e = events[i];
 		if (currentStep >= e.step) {
-			eventUpdate(currentStep, e, name);
+			eventUpdate(currentStep, e, timelineItems[itemIndex].name);
 		} else {
-			timelineItems[timelineIndexMap.get(name)].currentValue = e.lastValue;
+			timelineItems[itemIndex].currentValue = e.lastValue;
 		}
 	}
 
 	for (i => item in timelineItems) {
+		if (item.currentValue != item.lastValue) {
+			item.lastValue = item.currentValue;
+			switch(item.type) {
+				case "shader":
+					var text = timelineUIList[i].valueText;
+					if (text != null) {
+						text.text = Std.string(FlxMath.roundDecimal(item.currentValue, 2));
+					}
 
-		switch(item.type) {
-			case "shader":
-				var text = timelineUIList[i].valueText;
-				if (text != null) {
-					text.text = Std.string(FlxMath.roundDecimal(item.currentValue, 2));
-				}
+					item.object.hset(item.property, item.currentValue);
+				case "modifier":
+					var text = timelineUIList[i].valueText;
+					if (text != null) {
+						text.text = Std.string(FlxMath.roundDecimal(item.currentValue, 2));
+					}
 
-				item.object.hset(item.property, item.currentValue);
-			case "modifier":
-				var text = timelineUIList[i].valueText;
-				if (text != null) {
-					text.text = Std.string(FlxMath.roundDecimal(item.currentValue, 2));
-				}
-
-				item.object.value = item.currentValue;
+					item.object.value = item.currentValue;
+			}
 		}
+
+
 	}
+
+	lastStep = currentStep;
 
 	/*
 	for (obj => value in currentValueList) {
@@ -1416,8 +1425,8 @@ function sortAllEvents() {
 		else return 0;
 	});
 	eventGroup.members.sort(function(a, b) {
-		if(a.event.step < b.event.step) return -1;
-		else if(a.event.step > b.event.step) return 1;
+		if(eventGroup.getVarForEachAdd(a) < eventGroup.getVarForEachAdd(b)) return -1;
+		else if(eventGroup.getVarForEachAdd(a) > eventGroup.getVarForEachAdd(b)) return 1;
 		else return 0;
 	});
 }

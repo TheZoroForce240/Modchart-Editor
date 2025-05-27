@@ -12,6 +12,7 @@ import funkin.editors.ui.UIColorwheel;
 import funkin.editors.ui.UIWindow;
 import funkin.editors.ui.UITextBox;
 import funkin.editors.ui.UIAutoCompleteTextBox;
+import funkin.backend.utils.IniUtil;
 
 import flixel.FlxCamera;
 import flixel.math.FlxPoint;
@@ -197,6 +198,7 @@ class ModchartEditButton extends UIButton {
 
 	public var nameInput:UITextBox;
 	public var fileInput:UIAutoCompleteTextBox;
+	public var descText:UIText;
 
 	public var valueInput:UINumericStepper;
 	public var strumLineIDInput:UINumericStepper;
@@ -237,6 +239,7 @@ class ModchartEditButton extends UIButton {
 		camOther: false,
 		properties: [],
 	}
+	public var modList = [];
 
 	public function new(id, modType, node, parent) {
 		super(0, 0, '', function () {}, 928, 280);
@@ -286,7 +289,6 @@ class ModchartEditButton extends UIButton {
 			return uiText;
 		}
 
-		var modList = [];
 		if (modifierData.type == "modifier") {
 			for (path in Paths.getFolderContent('modifiers/', true, null)) {
 				if (Path.extension(path) == "vert" || Path.extension(path) == "frag") {
@@ -331,6 +333,23 @@ class ModchartEditButton extends UIButton {
 		addLabelOn(fileInput, displayName + " File" + (modifierData.type == "modifier" ? " (modifiers/)" : " (shaders/modcharts/)") );
 		members.push(fileInput);
 
+		fileInput.onChange = function(newfile) {
+			if (modifierData.type == "modifier") {
+				if (modifierData.modifier != newfile) {
+					modifierData.modifier = newfile;
+					updateMod();
+				}
+			} else if (modifierData.type == "shader") {
+				if (modifierData.shader != newfile) {
+					modifierData.shader = newfile;
+					updateMod();
+				}
+			}
+		}
+
+		descText = new UIText(16 + 216, 100, 300, "test");
+		members.push(descText);
+
 		if (modifierData.type == "modifier") {
 			valueInput = new UINumericStepper(16, 100, modifierData.value, 0, 6, null, null, 200);
 			addLabelOn(valueInput, "Default Value");
@@ -370,7 +389,7 @@ class ModchartEditButton extends UIButton {
 		deleteIcon.antialiasing = false;
 		members.push(deleteIcon);
 
-		updateExpand();
+		updateMod();
 	}
 
 	public function follow(parent, obj, X, Y) {
@@ -386,15 +405,24 @@ class ModchartEditButton extends UIButton {
 
 		follow(this, nameInput, 16, 34);
 		follow(this, fileInput, 232, 34);
+		follow(this, descText, 232, 100-24);
 
+		var lastHeight = 100;
 		if (modifierData.type == "modifier") {
 			follow(this, valueInput, 16, 100);
 			follow(this, strumLineIDInput, 16, 166);
 			follow(this, strumIDInput, 16, 166 + 66);
+			lastHeight = 166 + 66 + 66;
 		} else if (modifierData.type == "shader") {
 			follow(this, camGameCheckbox, 16, 80);
 			follow(this, camHUDCheckbox, 16, 80 + 40);
 			follow(this, camOtherCheckbox, 16, 80 + 80);
+			lastHeight = 160 + 66;
+		}
+
+		for (obj in extraValues) {
+			follow(this, obj, 16, lastHeight);
+			lastHeight += 66;
 		}
 
 		follow(this, colorInput, 560, 34);
@@ -409,12 +437,97 @@ class ModchartEditButton extends UIButton {
 		}
 	}
 
+	public var extraValuesList = []; //make sure order is correct
+	public var extraValues = [];
+
+	public function updateMod() {
+		var fileExists = false;
+		var iniExists = false;
+		var iniData = ["" => ""];
+		if (modifierData.type == "modifier") {
+			if (Assets.exists("modifiers/" + modifierData.modifier + ".vert") || Assets.exists("modifiers/" + modifierData.modifier + ".frag")) {
+				fileExists = true;
+			}
+			if (Assets.exists("modifiers/" + modifierData.modifier + ".ini")) {
+				iniExists = true;
+				iniData = IniUtil.parseAsset("modifiers/" + modifierData.modifier+ ".ini");
+			}
+		} else if (modifierData.type == "shader") {
+			if (Assets.exists("shaders/modcharts/" + modifierData.shader + ".vert") || Assets.exists("shaders/modcharts/" + modifierData.shader + ".frag")) {
+				fileExists = true;
+			}
+			if (Assets.exists("shaders/modcharts/" + modifierData.shader + ".ini")) {
+				iniExists = true;
+				iniData = IniUtil.parseAsset("shaders/modcharts/" + modifierData.shader + ".ini");
+			}
+		}
+
+		if (iniExists) {
+			descText.text = iniData.exists("desc") ? StringTools.replace(iniData.get("desc"), "#", "\n") : "";
+		} else {
+			var file = modifierData.modifier;
+			if (modifierData.type == "shader") file = modifierData.shader;
+			descText.text = fileExists ? "" : "\"" + file + "\" could not found!";
+		}
+
+		for (obj in extraValues) {
+			members.remove(obj);
+			obj.destroy();
+		}
+		extraValues = [];
+		extraValuesList = [];
+
+		//create submod/prop boxes
+		for (key => val in iniData) {
+			if (key != "desc" && key != "") {
+				//trace(key);
+				var input = new UINumericStepper(16, 100, Std.parseFloat(val), 0, 6, null, null, 200);
+				members.push(input);
+				extraValues.push(input);
+				extraValuesList.push(key);
+			}
+		}
+		
+		if (modifierData.type == "modifier") {
+			for (submod in modifierData.subMods) {
+				if (extraValuesList.contains(submod.name)) {
+					var inputBox = extraValues[extraValuesList.indexOf(submod.name)];
+					inputBox.value = submod.value;
+				}
+			}
+			modifierData.subMods = []; //temp remove to clear out any submods that shouldnt be there
+			for (i => names in extraValuesList) {
+				modifierData.subMods.push({
+					name: names,
+					value: extraValues[i].value
+				});
+			}
+		} else if (modifierData.type == "shader") {
+			for (prop in modifierData.properties) {
+				if (extraValuesList.contains(prop.name)) {
+					var inputBox = extraValues[extraValuesList.indexOf(prop.name)];
+					inputBox.value = prop.value;
+				}
+			}
+			modifierData.properties = []; //temp remove to clear out any properties that shouldnt be there
+			for (i => names in extraValuesList) {
+				modifierData.properties.push({
+					name: names,
+					value: extraValues[i].value
+				});
+			}
+		}
+
+		updateExpand();
+	}
+
 
 	public function getHeight() {
-		var h = 240;
+		var h = 250;
 		if (modifierData.type == "modifier") {
 			h = 320;
 		}
+		h += extraValuesList.length * 66;
 		return h;
 	}
 
@@ -425,7 +538,7 @@ class ModchartEditButton extends UIButton {
 			resize(bWidth, 40);
 		}
 
-		var expandedItems = [nameInput, fileInput, colorInput, deleteButton, deleteIcon];
+		var expandedItems = [nameInput, fileInput, descText, colorInput, deleteButton, deleteIcon];
 		if (modifierData.type == "modifier") {
 			expandedItems.push(valueInput);
 			expandedItems.push(strumLineIDInput);
@@ -434,6 +547,9 @@ class ModchartEditButton extends UIButton {
 			expandedItems.push(camGameCheckbox);
 			expandedItems.push(camHUDCheckbox);
 			expandedItems.push(camOtherCheckbox);
+		}
+		for (obj in extraValues) {
+			expandedItems.push(obj);
 		}
 
 		for (item in expandedItems) {

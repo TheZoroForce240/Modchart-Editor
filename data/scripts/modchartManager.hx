@@ -37,12 +37,13 @@ function postUpdate(elapsed)
 
 		if (PlayState.instance != null)
 		{
-			strumLines.members[p].notes.limit = 1750 / scrollSpeed;
+			strumLines.members[p].notes.limit = 2500 / scrollSpeed;
 			strumLines.members[p].notes.forEach(function(n)
 			{
 				if (n.shader == null) {
 					n.shader = modTable.getShader(p, n.strumID);
 				}
+				n.forceIsOnScreen = true;
 				//n.shader.viewMatrix = modchartCamera.viewMatrix;
 				//n.shader.songPosition = Conductor.songPosition;
 				//n.shader.curBeat = Conductor.curBeatFloat;
@@ -129,41 +130,53 @@ public function initModchart()
 	modchartInitialized = true;
 	modTable.init();
 
-	var segmentsToMake = Math.ceil((2500 / PlayState.SONG.scrollSpeed) / Conductor.stepCrochet) + 4;
+	var segmentsToMake = Math.ceil((3500 / PlayState.SONG.scrollSpeed) / (Conductor.stepCrochet));
 
 	for(p in 0...strumLines.length) {
 		if (PlayState.instance != null) {
 			strumLines.members[p].onNoteDelete.add(onDeleteNote);
-		} else {
-			if (useNotePaths) {
-				notePathGroup.push([]);
-				for (i => strum in strumLines[p]) {
-					notePathGroup[p].push([]);
+		}
 
-					var curTime = -Conductor.crochet;
-					for (l in 0...segmentsToMake) {
-						var lineSpr = new FlxSprite(strum.x + 49, 56 + strum.y + (curTime * 0.45 * PlayState.SONG.scrollSpeed));
-						lineSpr.makeGraphic(1,1);
-						lineSpr.setGraphicSize(10, Math.ceil(Conductor.stepCrochet * 0.45 * PlayState.SONG.scrollSpeed));
-						lineSpr.updateHitbox();
-						lineSpr.cameras = [camHUD];
-						notePathGroup[p][i].push(lineSpr);
-						insert(0, lineSpr);
-						curTime += Conductor.stepCrochet;
-					}
+		if (useNotePaths) {
+			notePathGroup.push([]);
+			if (PlayState.instance != null) {
+				shitarray = strumLines.members[p].members;
+			} else {
+				shitarray = strumLines[p];
+			}
+			for (i => strum in shitarray) {
+				notePathGroup[p].push([]);
+
+				var curTime = 0;
+				for (l in 0...segmentsToMake) {
+					var lineSpr = new FlxSprite(strum.x + 50, 56 + strum.y + (curTime * 0.45 * PlayState.SONG.scrollSpeed));
+					lineSpr.makeGraphic(1,1);
+					lineSpr.setGraphicSize(10, Math.ceil(Conductor.stepCrochet * 0.45 * PlayState.SONG.scrollSpeed));
+					lineSpr.updateHitbox();
+					lineSpr.cameras = [camHUD];
+					lineSpr.forceIsOnScreen = true;
+					notePathGroup[p][i].push(lineSpr);
+					insert(0, lineSpr);
+					curTime += Conductor.stepCrochet;
 				}
 			}
 		}
 	}
 
-	updateNotePaths();
+	if (useNotePaths) updateNotePaths();
 }
 
 public function updateNotePaths() {
 	for(p in 0...strumLines.length) {
-		for (i => strum in strumLines[p]) {
+		var shitarray = [];
+		if (PlayState.instance != null) {
+			shitarray = strumLines.members[p].members;
+		} else {
+			shitarray = strumLines[p];
+		}
+		for (i => strum in shitarray) {
 
-			var curTime = -Conductor.crochet;
+			var curTime = 0;
 			for (lineSpr in notePathGroup[p][i]) {
 				var n = lineSpr;
 				n.shader = modTable.getShader(p, i);
@@ -174,20 +187,17 @@ public function updateNotePaths() {
 				n.getScreenPosition(point, camHUD);
 				n.shader.screenX = (n.origin.x + point.x - n.offset.x);
 				if (downscroll)
-					n.shader.screenY = (n.origin.y + point.y - n.offset.y) - strum.y;
+					n.shader.screenY = (n.origin.y + point.y - n.offset.y);// - strum.y;
 				else
-					n.shader.screenY = (n.origin.y + point.y - n.offset.y) + strum.y;
+					n.shader.screenY = (n.origin.y + point.y - n.offset.y);// + strum.y;
 				point.put();
 
-				var nextTime = curTime + Conductor.stepCrochet;
+				var time = -curTime;
+				var nextTime = -(curTime + Conductor.stepCrochet);
 
 				n.shader.strumID = i;
 				n.shader.strumLineID = p;
-				if (downscroll) {
-					n.shader.data.noteCurPos.value = [nextTime, nextTime, curTime, curTime];
-				} else {
-					n.shader.data.noteCurPos.value = [curTime, curTime, nextTime, nextTime];
-				}
+				n.shader.data.noteCurPos.value = [nextTime, nextTime, time, time];
 				n.shader.scrollSpeed = PlayState.SONG.scrollSpeed;
 
 				curTime += Conductor.stepCrochet;
@@ -198,7 +208,7 @@ public function updateNotePaths() {
 }
 
 //fixes for splashes
-/*function onNoteHit(event)
+function onNoteHit(event)
 {
 	if (event.showSplash)
 	{
@@ -213,4 +223,4 @@ public function updateNotePaths() {
 		while(splashHandler.members.length > 8)
 			splashHandler.remove(splashHandler.members[0], true);
 	}
-}*/
+}

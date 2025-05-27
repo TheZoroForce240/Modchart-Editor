@@ -66,8 +66,8 @@ class EventObject extends funkin.editors.ui.UISprite {
 
 		antialiasing = true; ID = -1;
 		loadGraphic(Paths.image('editors/charter/note'), true, 157, 154);
-		//animation.add("note", [for(i in 0...frames.frames.length) i], 0, true);
-		//animation.play("note");
+		animation.add("note", [for(i in 0...frames.frames.length) i], 0, true);
+		animation.play("note");
 		setGraphicSize(20,20);
 		updateHitbox();
 		//this.setUnstretchedGraphicSize(40, 40, false);
@@ -148,8 +148,8 @@ class EventGroup extends funkin.backend.MusicBeatGroup {
 	public var conductorPos:Float = 0;
 	public function _update(elapsed:Float):Void
 	{
-		var begin = SortedArrayUtil.binarySearch(members, conductorPos-1, getVarForEachAdd);
-		var end = SortedArrayUtil.binarySearch(members, conductorPos+((1280-250)/size), getVarForEachRemove);
+		var begin = getVisibleStartIndex();
+		var end = getVisibleEndIndex();
 
 		for(i in begin...end) {
 			__loopSprite = members[i];
@@ -164,8 +164,8 @@ class EventGroup extends funkin.backend.MusicBeatGroup {
 			FlxCamera._defaultCameras = _cameras;
 		}*/
 
-		var begin = SortedArrayUtil.binarySearch(members, conductorPos-1, getVarForEachAdd);
-		var end = SortedArrayUtil.binarySearch(members, conductorPos+((1280-250)/size), getVarForEachRemove);
+		var begin = getVisibleStartIndex();
+		var end = getVisibleEndIndex();
 
 		
 
