@@ -6,51 +6,8 @@ import funkin.editors.ui.UINumericStepper;
 import funkin.editors.ui.UIDropDown;
 import funkin.editors.ui.UIButton;
 import funkin.editors.ui.UICheckbox;
-import ModchartEventTypes;
 
-var propertyMap = ["" => null];
-
-var curX = 0;
-var curY = 0;
-
-function create() {	
-	winTitle = "Edit Modchart Event - " + getEventTimelineName(CURRENT_EVENT.event);
-	winWidth = 960;
-
-	setWindowSizeForEvent(CURRENT_EVENT.event);
-}
-function addLabelOn(ui:UISprite, text:String)
-	add(new UIText(ui.x, ui.y - 24, 0, text));
-
-function addStepperButtons(stepper:UINumericStepper, change1:Float, change2:Float = 0.0, w:Float = 32.0) {
-
-	var leftButton = new UIButton(stepper.x-w, stepper.y, "<", function() {
-		stepper.onChange(Std.string(stepper.value-change1));
-	}, w); add(leftButton);
-
-	if (change2 != 0.0) {
-		var leftButton2 = new UIButton(leftButton.x-w, stepper.y, "<<", function() {
-			stepper.onChange(Std.string(stepper.value-change2));
-		}, w); add(leftButton2);
-	}
-
-	var rightButton = new UIButton(stepper.x+stepper.bWidth, stepper.y, ">", function() {
-		stepper.onChange(Std.string(stepper.value+change1));
-	}, w); add(rightButton);
-
-	if (change2 != 0.0) {
-		var rightButton2 = new UIButton(rightButton.x+rightButton.bWidth, stepper.y, ">>", function() {
-			stepper.onChange(Std.string(stepper.value+change2));
-		}, w); add(rightButton2);
-	}
-}
-
-var useEaseBoxes = false;
-var easeBoxes = [];
-var easeWidth = 300;
-var easeBoxWidth = 5;
-var easeFunc = FlxEase.linear;
-var easeList = [
+public static var easeList = [
 	"linear",
 
 	"quadIn",
@@ -102,18 +59,68 @@ var easeList = [
 	"smootherStepInOut"
 ];
 
+var propertyMap = ["" => null];
+
+var eventEditWindowData = {
+	curX: 0,
+	curY: 0
+};
+
+function create() {	
+	winTitle = "Edit Modchart Event - " + EVENT_EDIT_EVENT_SCRIPT.call("getDisplayName", [CURRENT_EVENT.event]);
+	winWidth = EVENT_EDIT_EVENT_SCRIPT.call("getEventWindowWidth", []);
+	winHeight = EVENT_EDIT_EVENT_SCRIPT.call("getEventWindowHeight", []);
+}
+function addLabelOn(ui:UISprite, text:String)
+	add(new UIText(ui.x, ui.y - 24, 0, text));
+
+function addStepperButtons(stepper:UINumericStepper, change1:Float, change2:Float = 0.0, w:Float = 32.0) {
+
+	var leftButton = new UIButton(stepper.x-w, stepper.y, "<", function() {
+		stepper.onChange(Std.string(stepper.value-change1));
+	}, w); add(leftButton);
+
+	if (change2 != 0.0) {
+		var leftButton2 = new UIButton(leftButton.x-w, stepper.y, "<<", function() {
+			stepper.onChange(Std.string(stepper.value-change2));
+		}, w); add(leftButton2);
+	}
+
+	var rightButton = new UIButton(stepper.x+stepper.bWidth, stepper.y, ">", function() {
+		stepper.onChange(Std.string(stepper.value+change1));
+	}, w); add(rightButton);
+
+	if (change2 != 0.0) {
+		var rightButton2 = new UIButton(rightButton.x+rightButton.bWidth, stepper.y, ">>", function() {
+			stepper.onChange(Std.string(stepper.value+change2));
+		}, w); add(rightButton2);
+	}
+}
+
+var useEaseBoxes = false;
+var easeBoxes = [];
+var easeWidth = 300;
+var easeBoxWidth = 5;
+var easeFunc = FlxEase.linear;
+
 function postCreate() {
 	propertyMap.clear();
 
-	curX = windowSpr.x + 20;
-	curY = windowSpr.y + 41;
+	eventEditWindowData.curX = windowSpr.x + 20;
+	eventEditWindowData.curY = windowSpr.y + 41;
+	eventEditWindowData.state = this;
+	eventEditWindowData.windowSpr = windowSpr;
+	eventEditWindowData.addStepper = addStepper; //uhh maybe could have this better but just transferring funcs through the struct for easy access
+	eventEditWindowData.addCheckbox = addCheckbox;
+	eventEditWindowData.createEaseBoxes = createEaseBoxes;
+	eventEditWindowData.changeEaseFunc = changeEaseFunc;
 
-	setupEventEditMenu(CURRENT_EVENT.event);
+	EVENT_EDIT_EVENT_SCRIPT.call("setupEventWindow", [CURRENT_EVENT.event, propertyMap, eventEditWindowData]);
 
 	trace(CURRENT_EVENT.event);
 
 	var saveButton = new UIButton(windowSpr.x + windowSpr.bWidth - 20, windowSpr.y + windowSpr.bHeight - 16 - 32, "Save & Close", function() {
-		saveEventEdit(CURRENT_EVENT.event);
+		EVENT_EDIT_EVENT_SCRIPT.call("saveEventWindow", [CURRENT_EVENT.event, propertyMap]);
 		EVENT_EDIT_CALLBACK();
 		close();
 	});
@@ -140,13 +147,13 @@ function addStepper(name, label, value, ?stepperV1, ?stepperV2) {
 	if (stepperV1 == null) stepperV1 = 0.1;
 	if (stepperV2 == null) stepperV2 = 1;
 	
-	var text = new UIText(curX, curY, 0, label);
+	var text = new UIText(eventEditWindowData.curX, eventEditWindowData.curY, 0, label);
 	add(text);
-	curY += 28;
+	eventEditWindowData.curY += 28;
 
-	var numericStepper = new UINumericStepper(curX, curY, value, 1, 3, null, null, 120);
+	var numericStepper = new UINumericStepper(eventEditWindowData.curX, eventEditWindowData.curY, value, 1, 3, null, null, 120);
 	add(numericStepper);
-	curY += 50;
+	eventEditWindowData.curY += 50;
 
 	addStepperButtons(numericStepper, stepperV1, stepperV2, 32);
 
@@ -157,9 +164,7 @@ function addStepper(name, label, value, ?stepperV1, ?stepperV2) {
 }
 
 function addCheckbox(name, label, value) {
-
-
-	var checkbox = new UICheckbox(curX, curY, label, value);
+	var checkbox = new UICheckbox(eventEditWindowData.curX, eventEditWindowData.curY, label, value);
 	add(checkbox);
 	propertyMap.set(name, checkbox);
 }
@@ -168,7 +173,7 @@ function addCheckbox(name, label, value) {
 function createEaseBoxes() {
 	useEaseBoxes = true;
 
-	var easeText = new UIText(windowSpr.x+(windowSpr.bWidth/2), curY, 0, "Ease");
+	var easeText = new UIText(windowSpr.x+(windowSpr.bWidth/2), eventEditWindowData.curY, 0, "Ease");
 	add(easeText);
 	easeText.x -= easeText.width/2;
 
@@ -177,10 +182,13 @@ function createEaseBoxes() {
 		spr.makeSolid(easeBoxWidth, easeBoxWidth, -1);
 		add(spr);
 		spr.x = windowSpr.x + ((windowSpr.bWidth/2) - 150) + (easeBoxWidth/2) + (i * easeBoxWidth);
-		spr.y = curY + 40;
+		spr.y = eventEditWindowData.curY + 40;
 		easeBoxes.push(spr);
 	}
 	easeFunc = CoolUtil.flxeaseFromString(CURRENT_EVENT.event.ease, "");
+}
+function changeEaseFunc(newFunc) {
+	easeFunc = newFunc;
 }
 function update(elapsed) {
 

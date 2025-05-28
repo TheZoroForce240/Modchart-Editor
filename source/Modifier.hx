@@ -8,6 +8,7 @@ class Modifier {
     public var strumLineID:Int = -1;
     public var strumID:Int = -1;
     public var subMods:Array<SubModifier> = [];
+    public var lastValues = [];
 
     public var shaderName:String;
     public var shaderFile:String = null;

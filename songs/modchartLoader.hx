@@ -111,7 +111,7 @@ function loadEvents() {
 		for (node in list.elementsNamed("Modifier")) {
 			if (!noteModchart) {
 				noteModchart = true;
-				importScript("data/scripts/modchartManager.hx");
+				importScript("data/scripts/noteModchartManager.hx");
 				useNotePaths = true;
 			}
 
@@ -254,13 +254,6 @@ function create() {
 }
 function postCreate() {
 	if (!modcharts) return;
-
-	//importScript("data/scripts/modchartManager.hx");
-	//modTable.addModifier(new Modifier("drunkTest", 1, -1, -1, [new SubModifier("speed", 3)], "drunk"));
-	//modTable.addModifier(new Modifier("z", 100, 1, -1, [], "z"));
-	//modTable.addModifier(new Modifier("rot", 3, -1, -1, [new SubModifier("x", 45), new SubModifier("y", 0), new SubModifier("z", 45)], "strumLineRotate"));
-
-	//initModchart();
 
 	loadEvents();
 }

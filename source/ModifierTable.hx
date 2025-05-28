@@ -24,6 +24,10 @@ class ModifierTable {
         list = [];
         for(p in 0...PlayState.SONG.strumLines.length) {
             modTable.push([]);
+            for (mod in modifiers) {
+                mod.lastValues.push([]);
+                for (sub in mod.subMods) sub.lastValues.push([]);
+            }
 
             var keyCount:Int = 4;
             for (i in 0...keyCount) {
@@ -32,6 +36,8 @@ class ModifierTable {
                     if ((mod.strumLineID == -1 || mod.strumLineID == p) && (mod.strumID == -1 || mod.strumID == i)) {
                         modTable[p][i].push(mod);
                     }
+                    mod.lastValues[p][i] = Math.NEGATIVE_INFINITY;
+                    for (sub in mod.subMods) sub.lastValues[p][i] = Math.NEGATIVE_INFINITY;
                 }
             }
         }
@@ -39,9 +45,17 @@ class ModifierTable {
 
     public function applyValuesToShader(shader:CustomShader, strumLineID:Int, strumID:Int) {
         for (mod in modTable[strumLineID][strumID]) {
-            shader.hset(mod.shaderName, mod.value);
+            //only update value if needed
+            if (mod.lastValues[strumLineID][strumID] != mod.value) {
+                mod.lastValues[strumLineID][strumID] = mod.value;
+                shader.hset(mod.shaderName, mod.value);
+            }
+            
             for (sub in mod.subMods) {
-                shader.hset(sub.shaderName, sub.value);
+                if (sub.lastValues[strumLineID][strumID] != sub.value) {
+                    sub.lastValues[strumLineID][strumID] = sub.value;
+                    shader.hset(sub.shaderName, sub.value);
+                }
             }
         }
     }

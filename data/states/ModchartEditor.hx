@@ -13,7 +13,7 @@ import funkin.editors.ui.UISprite;
 import funkin.editors.ui.UISlider;
 import funkin.editors.ui.UIUtil;
 import funkin.editors.ui.UIContextMenu;
-//import funkin.editors.ui.UIContextMenu.UIContextMenuOption;
+import haxe.io.Path;
 import funkin.editors.ui.UITopMenu;
 import funkin.editors.ui.UISubstateWindow;
 import funkin.backend.utils.SortedArrayUtil;
@@ -29,16 +29,39 @@ import funkin.game.Stage;
 import Xml;
 import ModchartEventObjects;
 import UIScrollBarHorizontal;
-import ModchartEventTypes;
 import Modifier;
 
 
 public static var CURRENT_EVENT:EventObject = null; //event used by edit substate
+public static var EVENT_EDIT_EVENT_SCRIPT = null;
 public static var EVENT_EDIT_CALLBACK:Void->Void = null;
 public static var EVENT_EDIT_CANCEL_CALLBACK:Void->Void = null;
 public static var EVENT_DELETE_CALLBACK:Void->Void = null;
 
 public static var CURRENT_XML:Xml;
+
+public var eventScripts = ["" => null];
+public var itemScripts = ["" => null];
+
+public function callEventScriptFromItem(item, func, args) {
+	var script = null;
+	switch(item.type) {
+		case "shader": script = eventScripts.get("tweenShaderProperty");
+		case "modifier": script = eventScripts.get("tweenModifierValue");
+		case "addCameraZoom": script = eventScripts.get("addCameraZoom");
+		case "addHUDZoom": script = eventScripts.get("addHUDZoom");
+	}
+	if (script != null) {
+		script.call(func, args);
+	}
+}
+
+public function callEventScriptFromEvent(e, func, args) {
+	var script = eventScripts.get(e.type);
+	if (script != null) {
+		script.call(func, args);
+	}
+}
 
 /*
 {
@@ -51,8 +74,8 @@ public static var CURRENT_XML:Xml;
 	object: null //shader/modifier/whatever idk
 }
 */
-var timelineItems = [];
-var timelineIndexMap = ["" => -1];
+public var timelineItems = [];
+public var timelineIndexMap = ["" => -1];
 function createTimelineItem(name, type, object) {
 	if (timelineIndexMap.exists(name)) {
 		trace("duplicate timeline item?");
@@ -62,7 +85,7 @@ function createTimelineItem(name, type, object) {
 		type: type,
 		defaultValue: 0,
 		currentValue: 0,
-		lastValue: -9999,
+		lastValue: Math.NEGATIVE_INFINITY,
 		property: "",
 		object: object
 	}
@@ -72,20 +95,13 @@ function createTimelineItem(name, type, object) {
 	return timelineItem;
 }
 
-//var shaderList:Array<String> = [];
-//var shaders:Map<String, CustomShader> = [];
-//var iTimeShaders = [];
-//var iTimeWithSpeedShaders = [];
-
-var easeMap = ["" => function(t) {return t;}];
-
 var eventIndexList = [0];
 var events = [];
 var eventGroup = null;
 var eventGroupContainer = null;
 
 //array<String>
-var timelineList = [];
+public var timelineList = [];
 
 /*
 {
@@ -106,7 +122,7 @@ var timelineUIList = [];
 */
 var timelineGroups = [];
 
-var noteModchart:Bool = false;
+public var noteModchart:Bool = false;
 
 var conductorSprY:Float = 0.0;
 var vocals:FlxSound;
@@ -168,6 +184,15 @@ public var strumLines = [];
 public var downscroll = Options.downscroll;
 
 function postCreate() {
+
+	eventScripts.clear();
+	for (path in Paths.getFolderContent('data/scripts/modchartEvents/', true, null)) {
+		if (Path.extension(path) == "hx") {
+			var file = CoolUtil.getFilename(path);
+			
+			eventScripts.set(file, importScript("data/scripts/modchartEvents/" + file + ".hx"));
+		}
+	}
 
 	topMenu = [
 		{
@@ -766,7 +791,7 @@ function updateInputs() {
 					var step = quantStep((mousePos.x)/ROW_SIZE_X);
 					var timelineIndex = Math.floor(mousePos.y / ROW_SIZE_Y);
 					if (timelineIndex > -1 && timelineIndex < timelineList.length) {
-						addEvent(step, timelineList[timelineIndex]);
+						addEvent(step, timelineItems[timelineIndex]);
 					}
 				} else {
 					editEvent(clickedEvent, false);
@@ -792,14 +817,14 @@ function quantStepRounded(step:Float, ?roundRatio:Float = 0.5):Float {
 	return ratioRound(step/stepMulti, roundRatio) * stepMulti;
 }
 
-function addEvent(step, name) {
+function addEvent(step, item) {
 	updateEvents(step);
-	var e = eventCreate(step, name); //in ModchartEventTypes.hx
+	var e = callEventScriptFromItem(item, "createEventEditor", [item.name, step, item]);
 	if (e != null) {
 		SortedArrayUtil.addSorted(events, e, function(n){return n.step;});
 
 		var obj = new EventObject(e);
-		obj.timelineIndex = timelineList.indexOf(name);
+		obj.timelineIndex = timelineItems.indexOf(item);
 		obj.x = e.step * ROW_SIZE_X;
 		obj.y = obj.timelineIndex * ROW_SIZE_Y;
 		obj.cameras = [camTimeline];
@@ -814,6 +839,7 @@ function addEvent(step, name) {
 
 function editEvent(e:EventObject, justPlaced:Bool) {
 	CURRENT_EVENT = e;
+	EVENT_EDIT_EVENT_SCRIPT = eventScripts.get(e.event.type);
 	EVENT_EDIT_CALLBACK = function() {
 		e.updateEvent();
 		refreshEventTimings();
@@ -878,7 +904,6 @@ function loadEvents(reload) {
 		xml = Xml.parse(Assets.getText(xmlPath)).firstElement();
 	} else {
 		buildXMLFromEvents();
-
 		loadDefaults();
 	}
 
@@ -921,7 +946,7 @@ function loadEvents(reload) {
 		for (node in list.elementsNamed("Modifier")) {
 			if (!noteModchart) {
 				noteModchart = true;
-				importScript("data/scripts/modchartManager.hx");
+				importScript("data/scripts/noteModchartManager.hx");
 				useNotePaths = true;
 			}
 
@@ -960,11 +985,15 @@ function loadEvents(reload) {
 	}
 	for (item in timelineItems) {
 		item.currentValue = item.defaultValue;
-		trace(item);
 	}
 	for (list in xml.elementsNamed("Events")) {
 		for (event in list.elementsNamed("Event")) {
-			loadEventFromXML(event);
+
+			var eventType = event.get("type");
+			if (eventScripts.exists(eventType)) {
+				var e = eventScripts.get(eventType).call("eventFromXMLEditor", [event]);
+				events.push(e);
+			}
 		}
 	}
 	if (noteModchart) initModchart();
@@ -985,16 +1014,17 @@ function refreshEventTimings() {
 
 	for (item in timelineItems) {
 		item.currentValue = item.defaultValue;
-		item.lastValue = -9999;
+		item.lastValue = Math.NEGATIVE_INFINITY;
 		eventIndexList.push(-1);
 	}
+	lastStep = Math.NEGATIVE_INFINITY;
 
 	for (i in 0...events.length) {
 		var e = events[i];
 		e.lastIndex = -1;
 		e.nextIndex = -1;
 		
-		var n = getEventTimelineName(e);
+		var n = callEventScriptFromEvent(e, "getItemName", [e]);
 		var itemIndex = timelineIndexMap.get(n);
 		e.lastValue = timelineItems[itemIndex].currentValue;
 
@@ -1016,7 +1046,7 @@ function refreshEventTimings() {
 function createEventObjects() {
 	for (i in 0...events.length) {
 		var e = events[i];
-		var n = getEventTimelineName(e);
+		var n = callEventScriptFromEvent(e, "getItemName", [e]);
 
 		var obj = new EventObject(e);
 		obj.timelineIndex = timelineList.indexOf(n);
@@ -1028,7 +1058,7 @@ function createEventObjects() {
 	}
 }
 
-var lastStep = -9999;
+var lastStep = Math.NEGATIVE_INFINITY;
 function updateEvents(?forceStep:Float = null) {
 
 	for (item in timelineItems) {
@@ -1079,7 +1109,8 @@ function updateEvents(?forceStep:Float = null) {
 
 		var e = events[i];
 		if (currentStep >= e.step) {
-			eventUpdate(currentStep, e, timelineItems[itemIndex].name);
+			var item = timelineItems[itemIndex];
+			callEventScriptFromItem(item, "updateEventEditor", [currentStep, e, item]);
 		} else {
 			timelineItems[itemIndex].currentValue = e.lastValue;
 		}
@@ -1207,7 +1238,7 @@ function buildXMLFromEvents() {
 		node.set("type", e.type);
 		node.set("step", e.step);
 
-		eventToXML(node, e);
+		callEventScriptFromEvent(e, "eventToXMLEditor", [node, e]);
 
 		xmlEvents.addChild(node);
 	}
@@ -1350,7 +1381,7 @@ function _edit_redo() {
 function _edit_copy() {
 	clipboard = [];
 	for (event in selectedEvents) {
-		clipboard.push(eventCopy(event.event));
+		clipboard.push(callEventScriptFromEvent(event.event, "copyEventEditor", [event.event]));
 	}
 	clipboard.sort(function(a, b) {
 		if(a.step < b.step) return -1;
@@ -1367,8 +1398,8 @@ function _edit_paste() {
 		trace(diff);
 
 		for (event in clipboard) {
-			var e = eventCopy(event);
-			var n = getEventTimelineName(e);
+			var e = callEventScriptFromEvent(event, "copyEventEditor", [event]);
+			var n = callEventScriptFromEvent(e, "getItemName", [e]);
 
 			e.step += diff;
 

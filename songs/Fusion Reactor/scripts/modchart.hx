@@ -15,6 +15,8 @@ var eventsToRemove = [];
 var eventsMap = ["" => null];
 function postCreate()
 {
+
+	
 	//importScript("data/scripts/modchartManager.hx");
 
 	//setupModifiers();
