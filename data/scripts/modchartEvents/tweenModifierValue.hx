@@ -108,7 +108,7 @@ function getEventWindowHeight() {
     return 420;
 }
 function setupEventWindow(event, propertyMap, windowData) {
-    windowData.state.add(new UIText(windowData.curX, windowData.curY, 0, getDisplayName(event), 24));
+    windowData.state.add(new UIText(windowData.curX, windowData.curY, 0, getItemName(event), 24));
     windowData.curY += 28 + 50;
 
     var temp = windowData.curY;

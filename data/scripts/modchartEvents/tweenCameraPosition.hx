@@ -6,12 +6,12 @@ import funkin.editors.ui.UIDropDown;
 import funkin.editors.ui.UIButton;
 import funkin.editors.ui.UICheckbox;
 
-trace("Loaded Event Script: tweenShaderProperty");
+trace("Loaded Event Script: tweenCameraPosition");
 
 function createEventEditor(name, step, item) {
     var data = name.split(".");
     return {
-        "type": "tweenShaderProperty",
+        "type": "tweenCameraPosition",
         "step": step,
         "name": data[0],
         "property": data[1],
@@ -99,7 +99,7 @@ function getItemName(e) {
     return e.name + "." + e.property;
 }
 function getDisplayName(e) {
-    return "Tween Shader Property";
+    return "Tween Camera Position";
 }
 function getEventWindowWidth() {
     return 960;

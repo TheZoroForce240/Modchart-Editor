@@ -29,8 +29,6 @@ import funkin.game.Stage;
 import Xml;
 import ModchartEventObjects;
 import UIScrollBarHorizontal;
-import Modifier;
-
 
 public static var CURRENT_EVENT:EventObject = null; //event used by edit substate
 public static var EVENT_EDIT_EVENT_SCRIPT = null;
@@ -43,14 +41,16 @@ public static var CURRENT_XML:Xml;
 public var eventScripts = ["" => null];
 public var itemScripts = ["" => null];
 
-public function callEventScriptFromItem(item, func, args) {
-	var script = null;
-	switch(item.type) {
-		case "shader": script = eventScripts.get("tweenShaderProperty");
-		case "modifier": script = eventScripts.get("tweenModifierValue");
-		case "addCameraZoom": script = eventScripts.get("addCameraZoom");
-		case "addHUDZoom": script = eventScripts.get("addHUDZoom");
+public function callItemScriptFromItem(item, func, args) {
+	var script = itemScripts.get(item.type);
+	if (script != null) {
+		script.call(func, args);
 	}
+}
+
+public function callEventScriptFromItem(item, func, args) {
+	//items could technically support multiple types of event based on the name
+	var script = eventScripts.get(callItemScriptFromItem(item, "getEventNameFromItem", [item]));
 	if (script != null) {
 		script.call(func, args);
 	}
@@ -76,7 +76,7 @@ public function callEventScriptFromEvent(e, func, args) {
 */
 public var timelineItems = [];
 public var timelineIndexMap = ["" => -1];
-function createTimelineItem(name, type, object) {
+public function createTimelineItem(name, type, object) {
 	if (timelineIndexMap.exists(name)) {
 		trace("duplicate timeline item?");
 	}
@@ -110,7 +110,7 @@ public var timelineList = [];
 	valueText: null
 }
 */
-var timelineUIList = [];
+public var timelineUIList = [];
 
 /*
 {
@@ -120,7 +120,7 @@ var timelineUIList = [];
 	bg: null
 }
 */
-var timelineGroups = [];
+public var timelineGroups = [];
 
 public var noteModchart:Bool = false;
 
@@ -189,8 +189,15 @@ function postCreate() {
 	for (path in Paths.getFolderContent('data/scripts/modchartEvents/', true, null)) {
 		if (Path.extension(path) == "hx") {
 			var file = CoolUtil.getFilename(path);
-			
 			eventScripts.set(file, importScript("data/scripts/modchartEvents/" + file + ".hx"));
+		}
+	}
+
+	itemScripts.clear();
+	for (path in Paths.getFolderContent('data/scripts/modchartTimelineItems/', true, null)) {
+		if (Path.extension(path) == "hx") {
+			var file = CoolUtil.getFilename(path);
+			itemScripts.set(file, importScript("data/scripts/modchartTimelineItems/" + file + ".hx"));
 		}
 	}
 
@@ -267,8 +274,8 @@ function postCreate() {
 			label: "Modchart",
 			childs: [
 				{
-					label: "Edit Shaders and Modifiers",
-					onSelect: _modchart_editshaders
+					label: "Edit Timeline Items",
+					onSelect: _modchart_edititems
 				}
 			]
 		},
@@ -887,8 +894,9 @@ function loadSong() {
 }
 
 function loadDefaults() {
-	createTimelineItem("addCameraZoom", "addCameraZoom", null);
-	createTimelineItem("addHUDZoom", "addHUDZoom", null);
+	for (name => script in itemScripts) {
+		script.call("setupDefaults", []);
+	}
 }
 
 function loadEvents(reload) {
@@ -907,80 +915,9 @@ function loadEvents(reload) {
 		loadDefaults();
 	}
 
-	
-
-
 	for (list in xml.elementsNamed("Init")) {
-		for (node in list.elementsNamed("Shader")) {
-
-			var path = "modcharts/" + node.get("shader");
-			var s = new CustomShader(path);
-
-			var tlStartIndex = timelineList.length;
-			
-			for (prop in node.elementsNamed("Property")) {
-				var n = node.get("name") + "." + prop.get("name");
-				var item = createTimelineItem(n, "shader", s);
-				item.property = prop.get("name");
-				item.defaultValue = Std.parseFloat(prop.get("value"));
-			}
-
-			if (node.exists("camGame") && node.get("camGame") == "true") {
-				camGame.addShader(s);
-			}
-			if (node.exists("camHUD") && node.get("camHUD") == "true") {
-				camHUD.addShader(s);
-			}
-			if (node.exists("camOther") && node.get("camOther") == "true") {
-				camOther.addShader(s);
-			}
-
-			timelineGroups.push({
-				startIndex: tlStartIndex,
-				endIndex: timelineList.length,
-				color: FlxColor.fromString(node.get("color")),
-				bg: null
-			});
-		}
-
-		for (node in list.elementsNamed("Modifier")) {
-			if (!noteModchart) {
-				noteModchart = true;
-				importScript("data/scripts/noteModchartManager.hx");
-				useNotePaths = true;
-			}
-
-			var subMods = [];
-			for (sub in node.elementsNamed("SubMod")) {
-				subMods.push(new SubModifier(sub.get("name"), Std.parseFloat(sub.get("value"))));
-			}
-			var modifier = new Modifier(
-				node.get("name"), 
-				Std.parseFloat(node.get("value")),
-				Std.parseInt(node.get("strumLineID")),
-				Std.parseInt(node.get("strumID")),
-				subMods,
-				node.get("modifier")
-			);
-			modTable.addModifier(modifier);
-
-			var tlStartIndex = timelineList.length;
-
-			var item = createTimelineItem(node.get("name") + ".value", "modifier", modifier);
-			item.property = "";
-			item.defaultValue = Std.parseFloat(node.get("value"));
-			for (submod in subMods) {
-				var subItem = createTimelineItem(node.get("name") + "." + submod.name, "modifier", submod);
-				subItem.property = submod.name;
-				subItem.defaultValue = submod.value;
-			}
-
-			timelineGroups.push({
-				startIndex: tlStartIndex,
-				endIndex: timelineList.length,
-				color: FlxColor.fromString(node.get("color")),
-				bg: null
-			});
+		for (name => script in itemScripts) {
+			script.call("setupItemsFromXML", [list]);
 		}
 	}
 	for (item in timelineItems) {
@@ -1119,22 +1056,7 @@ function updateEvents(?forceStep:Float = null) {
 	for (i => item in timelineItems) {
 		if (item.currentValue != item.lastValue) {
 			item.lastValue = item.currentValue;
-			switch(item.type) {
-				case "shader":
-					var text = timelineUIList[i].valueText;
-					if (text != null) {
-						text.text = Std.string(FlxMath.roundDecimal(item.currentValue, 2));
-					}
-
-					item.object.hset(item.property, item.currentValue);
-				case "modifier":
-					var text = timelineUIList[i].valueText;
-					if (text != null) {
-						text.text = Std.string(FlxMath.roundDecimal(item.currentValue, 2));
-					}
-
-					item.object.value = item.currentValue;
-			}
+			callItemScriptFromItem(item, "updateItem", [item, i]);
 		}
 
 
@@ -1194,40 +1116,8 @@ function buildXMLFromEvents() {
 	//copy init events
 	if (xml != null) {
 		for (list in xml.elementsNamed("Init")) {
-			for (e in list.elementsNamed("Shader")) {
-
-				var event = Xml.createElement("Shader");
-				for (att in e.attributes()) {
-					event.set(att, e.get(att));
-				}
-
-				for (node in e.elementsNamed("Property")) {
-					var prop = Xml.createElement("Property");
-					for (att in node.attributes()) {
-						prop.set(att, node.get(att));
-					}
-					event.addChild(prop);
-				}
-
-				initEvents.addChild(event);
-			}
-
-			for (e in list.elementsNamed("Modifier")) {
-
-				var event = Xml.createElement("Modifier");
-				for (att in e.attributes()) {
-					event.set(att, e.get(att));
-				}
-
-				for (node in e.elementsNamed("SubMod")) {
-					var prop = Xml.createElement("SubMod");
-					for (att in node.attributes()) {
-						prop.set(att, node.get(att));
-					}
-					event.addChild(prop);
-				}
-
-				initEvents.addChild(event);
+			for (name => script in itemScripts) {
+				script.call("copyXMLItems", [list, initEvents]);
 			}
 		}
 	}
@@ -1276,7 +1166,7 @@ function _save_opt() {
 function _exit() {
 	FlxG.switchState(new FreeplayState());
 }
-function _modchart_editshaders() {
+function _modchart_edititems() {
 	CURRENT_XML = xml;
 	var win = new UISubstateWindow(true, 'ModchartEditDataSubstate');
 	FlxG.sound.music.pause();

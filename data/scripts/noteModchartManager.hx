@@ -197,7 +197,12 @@ public function updateNotePaths() {
 
 				n.shader.strumID = i;
 				n.shader.strumLineID = p;
-				n.shader.data.noteCurPos.value = [nextTime, nextTime, time, time];
+				if (downscroll) {
+					n.shader.data.noteCurPos.value = [nextTime, nextTime, time, time];
+				} else {
+					n.shader.data.noteCurPos.value = [time, time, nextTime, nextTime];
+				}
+				
 				n.shader.scrollSpeed = PlayState.SONG.scrollSpeed;
 
 				curTime += Conductor.stepCrochet;
