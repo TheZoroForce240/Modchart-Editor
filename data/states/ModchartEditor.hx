@@ -36,7 +36,19 @@ public static var EVENT_EDIT_CALLBACK:Void->Void = null;
 public static var EVENT_EDIT_CANCEL_CALLBACK:Void->Void = null;
 public static var EVENT_DELETE_CALLBACK:Void->Void = null;
 
+public static var ITEM_EDIT_LOADED_SCRIPTS = ["" => null];
+
 public static var CURRENT_XML:Xml;
+
+function destroy() {
+	CURRENT_EVENT = null;
+	EVENT_EDIT_EVENT_SCRIPT = null;
+	EVENT_EDIT_CALLBACK = null;
+	EVENT_EDIT_CANCEL_CALLBACK = null;
+	EVENT_DELETE_CALLBACK = null;
+	ITEM_EDIT_LOADED_SCRIPTS = null;
+	CURRENT_XML = null;
+}
 
 public var eventScripts = ["" => null];
 public var itemScripts = ["" => null];
@@ -121,8 +133,6 @@ public var timelineUIList = [];
 }
 */
 public var timelineGroups = [];
-
-public var noteModchart:Bool = false;
 
 var conductorSprY:Float = 0.0;
 var vocals:FlxSound;
@@ -902,7 +912,6 @@ function loadDefaults() {
 function loadEvents(reload) {
 
 	if (!reload) {
-		loadDefaults();
 		var xmlPath = Paths.getPath("songs/"+PlayState.SONG.meta.name+"/modchart.xml");
 		if (Assets.exists(Paths.getPath("songs/"+PlayState.SONG.meta.name+"/modchart-" + PlayState.difficulty + ".xml"))) {
 			xmlPath = Paths.getPath("songs/"+PlayState.SONG.meta.name+"/modchart-" + PlayState.difficulty + ".xml");
@@ -910,6 +919,7 @@ function loadEvents(reload) {
 		if (!Assets.exists(xmlPath)) return;
 
 		xml = Xml.parse(Assets.getText(xmlPath)).firstElement();
+		loadDefaults();
 	} else {
 		buildXMLFromEvents();
 		loadDefaults();
@@ -933,7 +943,9 @@ function loadEvents(reload) {
 			}
 		}
 	}
-	if (noteModchart) initModchart();
+	for (name => script in itemScripts) {
+		script.call("postXMLLoad", [xml]);
+	}
 	resetValuesToDefault();
 	refreshEventTimings();
 }
@@ -1168,6 +1180,7 @@ function _exit() {
 }
 function _modchart_edititems() {
 	CURRENT_XML = xml;
+	ITEM_EDIT_LOADED_SCRIPTS = itemScripts;
 	var win = new UISubstateWindow(true, 'ModchartEditDataSubstate');
 	FlxG.sound.music.pause();
 	vocals.pause();
@@ -1176,13 +1189,18 @@ function _modchart_edititems() {
 
 function _view_fullscreen() {
 	_fullscreen = !_fullscreen;
+	for (name => script in itemScripts) {
+		script.call("onFullscreen", [_fullscreen]);
+	}
 }
 function _view_downscroll() {
 	downscroll = !downscroll;
 	camHUD.downscroll = downscroll;
 	refreshEventTimings();
 
-	if (noteModchart) updateNotePaths();
+	for (name => script in itemScripts) {
+		script.call("onFlipScroll", [downscroll]);
+	}
 }
 
 function _song_start(_) {

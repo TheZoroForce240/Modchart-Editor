@@ -9,7 +9,10 @@ function getEventNameFromItem(item) {
     return "tweenCameraPosition";
 }
 
+var enabled = false;
+
 function setupDefaults() {
+    
     var tlStartIndex = timelineList.length;
 
     var x = createTimelineItem("camera.x", "camera3D", null);
@@ -29,7 +32,7 @@ function setupDefaults() {
 }
 
 function updateItem(item, i) {
-    if (noteModchart) {
+    if (enabled) {
         var text = timelineUIList[i].valueText;
         if (text != null) {
             text.text = Std.string(FlxMath.roundDecimal(item.currentValue, 2));
