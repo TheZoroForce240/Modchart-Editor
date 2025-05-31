@@ -26,6 +26,7 @@ import flixel.group.FlxGroup;
 import flixel.group.FlxSpriteGroup;
 import haxe.xml.Printer;
 import funkin.game.Stage;
+import funkin.backend.MusicBeatGroup;
 import Xml;
 import ModchartEventObjects;
 import UIScrollBarHorizontal;
@@ -137,6 +138,10 @@ public var timelineUIList = [];
 }
 */
 public var timelineGroups = [];
+
+public var timelineUIBG = new MusicBeatGroup();
+public var timelineUINameText = new MusicBeatGroup();
+public var timelineUIValueText = new MusicBeatGroup();
 
 var conductorSprY:Float = 0.0;
 var vocals:FlxSound;
@@ -479,49 +484,15 @@ function postCreate() {
 	valueBG.cameras = [camTimelineValueList];
 	valueBG.scrollFactor.set();
 	add(valueBG);
-	
-	for (i => name in timelineList) {
 
-		var bg = new FlxSprite(0,(ROW_SIZE_Y*i));
-		bg.makeGraphic(1,1);
-		bg.setGraphicSize(1280,ROW_SIZE_Y);
-		bg.updateHitbox();
-		bg.cameras = [camTimeline, camTimelineList, camTimelineValueList];
-		bg.scrollFactor.set(0, 1);
-		bg.color = i % 2 == 1 ? 0xFF272727 : 0xFF545454;
-		add(bg);
-
-		var text = new UIText(10, (ROW_SIZE_Y*i),0, name, 15);
-		text.cameras = [camTimelineList];
-		//add(text); //add after
-
-		var valueText = new UIText(10, (ROW_SIZE_Y*i),0, "-", 15);
-		valueText.cameras = [camTimelineValueList];
-		//add(valueText);
-
-		timelineUIList.push({
-			bg: bg,
-			nameText: text,
-			valueText: valueText
-		});
-	}
-
-	for (grp in timelineGroups) {
-		grp.bg = new FlxSprite(0, ROW_SIZE_Y * grp.startIndex);
-		grp.bg.makeGraphic(1,1);
-		grp.bg.setGraphicSize(1280,ROW_SIZE_Y * (grp.endIndex - grp.startIndex));
-		grp.bg.updateHitbox();
-		grp.bg.cameras = [camTimeline, camTimelineList, camTimelineValueList];
-		grp.bg.scrollFactor.set(0, 1);
-		grp.bg.color = grp.color;
-		grp.bg.alpha = 0.15;
-		add(grp.bg);
-	}
-
-	for (ui in timelineUIList) {
-		add(ui.nameText);
-		add(ui.valueText);
-	}
+	timelineUIBG.cameras = [camTimeline, camTimelineList, camTimelineValueList];
+	timelineUIBG.scrollFactor.set(0, 1);
+	add(timelineUIBG);
+	timelineUINameText.cameras = [camTimelineList];
+	add(timelineUINameText);
+	timelineUIValueText.cameras = [camTimelineValueList];
+	add(timelineUIValueText);
+	createTimelineUI();
 
 	var line = new FlxSprite(200-2,0);
 	line.makeGraphic(1,1);
@@ -578,6 +549,49 @@ function postCreate() {
 	add(selectionBox);
 }
 
+function createTimelineUI() {
+	timelineUIBG.clear();
+	timelineUINameText.clear();
+	timelineUIValueText.clear();
+	timelineUIList = [];
+
+	for (i => name in timelineList) {
+		var bg = new FlxSprite(0,(ROW_SIZE_Y*i));
+		bg.makeGraphic(1,1);
+		bg.setGraphicSize(1280,ROW_SIZE_Y);
+		bg.updateHitbox();
+		bg.cameras = [camTimeline, camTimelineList, camTimelineValueList];
+		bg.scrollFactor.set(0, 1);
+		bg.color = i % 2 == 1 ? 0xFF272727 : 0xFF545454;
+		timelineUIBG.add(bg);
+
+		var text = new UIText(10, (ROW_SIZE_Y*i),0, name, 15);
+		text.cameras = [camTimelineList];
+		timelineUINameText.add(text);
+
+		var valueText = new UIText(10, (ROW_SIZE_Y*i),0, "-", 15);
+		valueText.cameras = [camTimelineValueList];
+		timelineUIValueText.add(valueText);
+
+		timelineUIList.push({
+			bg: bg,
+			nameText: text,
+			valueText: valueText
+		});
+	}
+
+	for (grp in timelineGroups) {
+		grp.bg = new FlxSprite(0, ROW_SIZE_Y * grp.startIndex);
+		grp.bg.makeGraphic(1,1);
+		grp.bg.setGraphicSize(1280, ROW_SIZE_Y * (grp.endIndex - grp.startIndex));
+		grp.bg.updateHitbox();
+		grp.bg.cameras = [camTimeline, camTimelineList, camTimelineValueList];
+		grp.bg.scrollFactor.set(0, 1);
+		grp.bg.color = grp.color;
+		grp.bg.alpha = 0.15;
+		timelineUIBG.add(grp.bg);
+	}
+}
 
 
 function createStrumlines() {
@@ -925,7 +939,14 @@ function loadEvents(reload) {
 		xml = Xml.parse(Assets.getText(xmlPath)).firstElement();
 		loadDefaults();
 	} else {
-		buildXMLFromEvents();
+		//clear stuff for reload
+		timelineGroups = [];
+		timelineItems = [];
+		timelineList = [];
+		timelineIndexMap.clear();
+		for (name => script in itemScripts) {
+			script.call("reloadItems", []);
+		}
 		loadDefaults();
 	}
 
@@ -937,21 +958,34 @@ function loadEvents(reload) {
 	for (item in timelineItems) {
 		item.currentValue = item.defaultValue;
 	}
-	for (list in xml.elementsNamed("Events")) {
-		for (event in list.elementsNamed("Event")) {
+	if (!reload) {
+		for (list in xml.elementsNamed("Events")) {
+			for (event in list.elementsNamed("Event")) {
 
-			var eventType = event.get("type");
-			if (eventScripts.exists(eventType)) {
-				var e = eventScripts.get(eventType).call("eventFromXMLEditor", [event]);
-				events.push(e);
+				var eventType = event.get("type");
+				if (eventScripts.exists(eventType)) {
+					var e = eventScripts.get(eventType).call("eventFromXMLEditor", [event]);
+					events.push(e);
+				}
 			}
 		}
 	}
 	for (name => script in itemScripts) {
 		script.call("postXMLLoad", [xml]);
 	}
+
 	resetValuesToDefault();
 	refreshEventTimings();
+
+	if (reload) {
+		createTimelineUI();
+
+		for(i in 0...eventGroup.members.length) {
+			var obj = eventGroup.members[i];
+			var n = callEventScriptFromEvent(obj.event, "getItemName", [obj.event]);
+			obj.timelineIndex = timelineList.indexOf(n);
+		}
+	}
 }
 
 function resetValuesToDefault() {
@@ -1080,6 +1114,7 @@ function updateEvents(?forceStep:Float = null) {
 
 	lastStep = currentStep;
 
+	//TODO: reimplement iTime + speed
 	/*
 	for (obj => value in currentValueList) {
 		if (noteModifiers.contains(obj)) {
@@ -1128,8 +1163,6 @@ function buildXMLFromEvents(?newInitEvents = null) {
 	var newXml = Xml.createElement("Modchart");
 	var initEvents = newInitEvents == null ? Xml.createElement("Init") : newInitEvents;
 	var xmlEvents = Xml.createElement("Events");
-
-	trace(newInitEvents);
 	
 	//copy init events
 	if (xml != null && newInitEvents == null) {
@@ -1151,15 +1184,9 @@ function buildXMLFromEvents(?newInitEvents = null) {
 		xmlEvents.addChild(node);
 	}
 
-
 	newXml.addChild(initEvents);
     newXml.addChild(xmlEvents);
-	//trace(Printer.print(newXml, true));
-
-	//File.saveContent("modchart.xml", Printer.print(xml, true));
-
 	refreshEventTimings();
-
 	return newXml;
 }
 
@@ -1190,6 +1217,8 @@ function _modchart_edititems() {
 	ITEM_EDIT_SAVE_CALLBACK = function() {
 		xml = buildXMLFromEvents(ITEM_EDIT_SAVED_INIT_EVENTS);
 		xml = buildXMLFromEvents(); //do twice just in case
+
+		loadEvents(true);
 	}
 	var win = new UISubstateWindow(true, 'ModchartEditDataSubstate');
 	FlxG.sound.music.pause();

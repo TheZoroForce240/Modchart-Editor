@@ -1,5 +1,5 @@
 //
-import Modifier;
+import ModifierTable;
 import funkin.editors.ui.UISubstateWindow;
 import funkin.editors.ui.UIButton;
 import funkin.editors.ui.UIText;
@@ -96,6 +96,15 @@ function updateItem(item, i) {
     }
 
     item.object.value = item.currentValue;
+}
+
+function reloadItems() {
+    modTable = new ModifierTable();
+    for(p in 0...strumLines.length) {
+        for (i => strum in strumLines[p]) {
+            strum.shader = null;
+        }
+    }
 }
 
 function postXMLLoad(xml) {

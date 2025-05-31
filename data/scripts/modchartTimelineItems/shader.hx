@@ -86,6 +86,12 @@ function updateItem(item, i) {
     item.object.hset(item.property, item.currentValue);
 }
 
+function reloadItems() {
+    camGame._filters = [];
+    camHUD._filters = [];
+    camOther._filters = [];
+}
+
 
 //edit menu stuff
 function isEditable() { return true; }

@@ -127,42 +127,42 @@ function onDeleteNote(e) {
 
 public function initModchart()
 {
-	modchartInitialized = true;
 	modTable.init();
+	if (!modchartInitialized) {
+		var segmentsToMake = Math.ceil((3500 / PlayState.SONG.scrollSpeed) / (Conductor.stepCrochet));
 
-	var segmentsToMake = Math.ceil((3500 / PlayState.SONG.scrollSpeed) / (Conductor.stepCrochet));
-
-	for(p in 0...strumLines.length) {
-		if (PlayState.instance != null) {
-			strumLines.members[p].onNoteDelete.add(onDeleteNote);
-		}
-
-		if (useNotePaths) {
-			notePathGroup.push([]);
+		for(p in 0...strumLines.length) {
 			if (PlayState.instance != null) {
-				shitarray = strumLines.members[p].members;
-			} else {
-				shitarray = strumLines[p];
+				strumLines.members[p].onNoteDelete.add(onDeleteNote);
 			}
-			for (i => strum in shitarray) {
-				notePathGroup[p].push([]);
 
-				var curTime = 0;
-				for (l in 0...segmentsToMake) {
-					var lineSpr = new FlxSprite(strum.x + 50, 56 + strum.y + (curTime * 0.45 * PlayState.SONG.scrollSpeed));
-					lineSpr.makeGraphic(1,1);
-					lineSpr.setGraphicSize(10, Math.ceil(Conductor.stepCrochet * 0.45 * PlayState.SONG.scrollSpeed));
-					lineSpr.updateHitbox();
-					lineSpr.cameras = [camHUD];
-					lineSpr.forceIsOnScreen = true;
-					notePathGroup[p][i].push(lineSpr);
-					insert(0, lineSpr);
-					curTime += Conductor.stepCrochet;
+			if (useNotePaths) {
+				notePathGroup.push([]);
+				if (PlayState.instance != null) {
+					shitarray = strumLines.members[p].members;
+				} else {
+					shitarray = strumLines[p];
+				}
+				for (i => strum in shitarray) {
+					notePathGroup[p].push([]);
+
+					var curTime = 0;
+					for (l in 0...segmentsToMake) {
+						var lineSpr = new FlxSprite(strum.x + 50, 56 + strum.y + (curTime * 0.45 * PlayState.SONG.scrollSpeed));
+						lineSpr.makeGraphic(1,1);
+						lineSpr.setGraphicSize(10, Math.ceil(Conductor.stepCrochet * 0.45 * PlayState.SONG.scrollSpeed));
+						lineSpr.updateHitbox();
+						lineSpr.cameras = [camHUD];
+						lineSpr.forceIsOnScreen = true;
+						notePathGroup[p][i].push(lineSpr);
+						insert(0, lineSpr);
+						curTime += Conductor.stepCrochet;
+					}
 				}
 			}
 		}
+		modchartInitialized = true;
 	}
-
 	if (useNotePaths) updateNotePaths();
 }
 
