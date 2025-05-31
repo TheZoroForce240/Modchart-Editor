@@ -643,10 +643,7 @@ function update(elapsed) {
 	}
 	eventGroup.conductorPos = conductorSprY/ROW_SIZE_X;
 
-	
-
 	updateUI();
-
 	updateInputs();
 
 	__crochet = ((60 / Conductor.bpm) * 1000);
@@ -667,16 +664,6 @@ function update(elapsed) {
 			Conductor.songPosition -= (__crochet*0.25 * (FlxG.keys.pressed.SHIFT ? 8.0 : 1.0) * FlxG.mouse.wheel) - Conductor.songOffset;
 		}
 	}
-
-	
-
-	//if (stagePreviewMode) {
-		if (FlxG.mouse.pressedRight) {
-			camGame.scroll.x -= FlxG.mouse.deltaX;
-			camGame.scroll.y -= FlxG.mouse.deltaY;
-		}
-	//}
-
 
 	var songLength = FlxG.sound.music.length;
 	Conductor.songPosition = FlxMath.bound(Conductor.songPosition + Conductor.songOffset, 0, songLength);
@@ -752,6 +739,8 @@ function updateInputs() {
 	if(FlxG.keys.justPressed.ANY && currentFocus == null)
 		UIUtil.processShortcuts(topMenu);
 
+	if (_fullscreen) return;
+
 	scrollBar.active = !isDragging;
 	
 
@@ -761,7 +750,6 @@ function updateInputs() {
 			dragStartPos = FlxG.mouse.getWorldPosition(camTimeline);
 			isDragging = false;
 		} else if (FlxG.mouse.justReleased) {
-
 			if (isDragging) {
 				resetSelection();
 				for(i in 0...eventGroup.members.length) {
@@ -773,8 +761,6 @@ function updateInputs() {
 					}
 				}
 			}
-
-
 			dragStartPos = null;
 		}
 
@@ -1094,6 +1080,8 @@ function updateEvents(?forceStep:Float = null) {
 			eventIndexList[itemIndex] = i;
 		}
 
+		
+
 		var e = events[i];
 		if (currentStep >= e.step) {
 			var item = timelineItems[itemIndex];
@@ -1108,8 +1096,6 @@ function updateEvents(?forceStep:Float = null) {
 			item.lastValue = item.currentValue;
 			callItemScriptFromItem(item, "updateItem", [item, i]);
 		}
-
-
 	}
 
 	lastStep = currentStep;

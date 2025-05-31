@@ -50,6 +50,8 @@ var shaderEaseList = [
 	"elasticInOut",
 ];
 
+//TODO: maybe rework into ecs type system???
+
 class EventObject extends funkin.editors.ui.UISprite {
 	public var sustainSpr:UISprite;
 
@@ -63,14 +65,12 @@ class EventObject extends funkin.editors.ui.UISprite {
 		super();
 
 		event = e;
-
 		antialiasing = true; ID = -1;
 		loadGraphic(Paths.image('editors/charter/note'), true, 157, 154);
 		animation.add("note", [for(i in 0...frames.frames.length) i], 0, true);
 		animation.play("note");
 		setGraphicSize(20,20);
 		updateHitbox();
-		//this.setUnstretchedGraphicSize(40, 40, false);
 
 		sustainSpr = new UISprite(20, 10);
 		sustainSpr.makeSolid(1, 1, -1);
@@ -87,6 +87,7 @@ class EventObject extends funkin.editors.ui.UISprite {
 
 	public function updateLength(size:Float) {
 		sustainSpr.scale.set(0,0);
+		//TODO: fix this shit so its separate
 		if (event.type == "tweenShaderProperty" || event.type == "tweenModifierValue") {
 			sustainSpr.scale.set((event.time*size), 20);
 			sustainSpr.updateHitbox();
@@ -184,7 +185,7 @@ class EventGroupContainer extends FlxSprite {
 
 	//currently cant override group update/draw so using this as a workaround
 	override public function update(elapsed) {
-		eventGroup._update(elapsed);
+		//eventGroup._update(elapsed); not needed?
 	}
 	override public function draw() {
 		eventGroup._draw();
