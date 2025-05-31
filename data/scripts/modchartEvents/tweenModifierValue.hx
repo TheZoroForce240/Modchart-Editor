@@ -145,6 +145,10 @@ function setupEventWindow(event, propertyMap, windowData) {
     windowData.addStepper("time", "Tween Length (steps)", event.time, 1, 4);
 }
 function saveEventWindow(event, propertyMap) {
+    propertyMap.get("startValue").__onChange(propertyMap.get("startValue").label.text);
+    propertyMap.get("value").__onChange(propertyMap.get("value").label.text);
+    propertyMap.get("time").__onChange(propertyMap.get("time").label.text);
+
     event.startValue = propertyMap.get("startValue").value;
     event.value = propertyMap.get("value").value;
     event.ease = easeList[propertyMap.get("ease").index];

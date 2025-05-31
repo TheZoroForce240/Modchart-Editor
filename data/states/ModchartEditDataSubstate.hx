@@ -18,6 +18,8 @@ import flixel.FlxCamera;
 import flixel.math.FlxPoint;
 import flixel.util.FlxSort;
 import flixel.math.FlxMath;
+import haxe.xml.Printer;
+import Xml;
 
 import funkin.backend.MusicBeatGroup;
 
@@ -83,7 +85,7 @@ class ModchartEditUIButtonList extends UIWindow {
 	public function remove(button:T) {
 		nextscrollY -= button.bHeight;
 		buttons.members.remove(button);
-		button.destroy();
+		//button.destroy();
 	}
 
 	public function updateButtonsPos(elapsed:Float) {
@@ -91,7 +93,6 @@ class ModchartEditUIButtonList extends UIWindow {
 		for (i => button in buttons.members) {
 			if (button == null) continue;
 
-			button.selectable = false;
 			button.cameras = [buttonCameras];
 
 			button.setPosition(
@@ -161,6 +162,7 @@ class ModchartEditUIButtonList extends UIWindow {
 
 class ModchartEditButton extends UIButton {
 	public var topText:UIText;
+	public var itemDisplayName:String = "";
 	public var expandButton:UIButton;
 
 	public var nameInput:UITextBox;
@@ -198,10 +200,12 @@ class ModchartEditButton extends UIButton {
 	}
 
 	public var script = null;
+	public var itemList = null;
 
-	public function new(id, modType, node, parent, scrip) {
+	public function new(id, modType, node, list, scr) {
 		super(0, 0, '', function () {}, 928, 280);
-		script = scrip;
+		script = scr;
+		itemList = list;
 
 		if (node != null) {
 			itemData.name = node.get("name");
@@ -223,25 +227,44 @@ class ModchartEditButton extends UIButton {
 
 		modList = script.call("getAvailableFiles", []);
 
-		var displayName = script.call("getEditDisplayName", []);
+		itemDisplayName = script.call("getEditDisplayName", []);
 		var folderDisplayName = script.call("getFolderDisplayName", []);
 
-		topText = new UIText(16, 12, 0, itemData.name + " (" + displayName + ")");
+		topText = new UIText(16, 12, 0, itemData.name + " (" + itemDisplayName + ")");
 		members.push(topText);
 
-		expandButton = new UIButton(16, 12, "^", function () {
+		expandButton = new UIButton(16, 12, "↑", function () {
 			expanded = !expanded;
 			updateExpand();
 		}, 32, 24);
 		members.push(expandButton);
 
+		shiftDownButton = new UIButton(16, 12, "↓", function () {
+			var currentIndex = itemList.buttons.members.indexOf(this);
+			if (currentIndex < itemList.buttons.members.length-1) {
+				itemList.remove(this);
+				itemList.insert(this, currentIndex + 1);
+			}
+		}, 32, 24);
+		members.push(shiftDownButton);
+
+		shiftUpButton = new UIButton(16, 12, "↑", function () {
+			var currentIndex = itemList.buttons.members.indexOf(this);
+			if (currentIndex > 0) {
+				itemList.remove(this);
+				itemList.insert(this, currentIndex - 1);
+			}
+		}, 32, 24);
+		members.push(shiftUpButton);
+
+
 		nameInput = new UITextBox(16, 34, itemData.name, 200);
-		addLabelOn(nameInput, displayName + " Name");
+		addLabelOn(nameInput, itemDisplayName + " Name");
 		members.push(nameInput);
 
 		fileInput = new UIAutoCompleteTextBox(16 + 216, 34, itemData.file, 200, 32, modList);
 		fileInput.suggestItems = modList;
-		addLabelOn(fileInput, displayName + " File " + folderDisplayName);
+		addLabelOn(fileInput, itemDisplayName + " File " + folderDisplayName);
 		members.push(fileInput);
 
 		fileInput.onChange = function(newfile) {
@@ -261,9 +284,9 @@ class ModchartEditButton extends UIButton {
 		addLabelOn(colorInput, "Editor Color");
 		members.push(colorInput);
 
-		var p = parent;
 		deleteButton = new UIButton(16, 280-32-11, "", function () {
-			p.remove(this);
+			itemList.remove(this);
+			this.destroy();
 		}, 64);
 		deleteButton.color = 0xFFFF0000;
 		deleteButton.autoAlpha = false;
@@ -314,6 +337,14 @@ class ModchartEditButton extends UIButton {
 				follow(extraValues[i], label, 0, -24);
 				label.visible = expanded;
 			}
+		} else {
+			shiftDownButton.visible = shiftUpButton.visible = this.hoveredByChild;
+			if (hoveredByChild) {
+				follow(this, shiftDownButton, 880-80, 8);
+				follow(this, shiftUpButton, 880-120, 8);
+				shiftDownButton.selectable = itemList.buttons.members.indexOf(this) < itemList.buttons.members.length-1;
+				shiftUpButton.selectable = itemList.buttons.members.indexOf(this) > 0;
+			}
 		}
 	}
 
@@ -325,7 +356,6 @@ class ModchartEditButton extends UIButton {
 		script.call("updateEditItem", [itemData, this]);
 		updateExpand();
 	}
-
 
 	public function getHeight() {
 		var h = script.call("getBaseWindowHeight", []);
@@ -362,8 +392,9 @@ class ModchartEditButton extends UIButton {
 			item.visible = expanded;
 		}
 
-		expandButton.field.text = expanded ? "^" : "<";
-		topText.visible = !expanded;
+		expandButton.field.text = expanded ? "↑" : "<";
+		topText.visible = shiftDownButton.visible = shiftUpButton.visible = shiftDownButton.selectable = shiftUpButton.selectable = !expanded;
+		topText.text = nameInput.label.text + " (" + itemDisplayName + ")";
 
 		for (shit in labels) {
 			shit[1].visible = expanded;
@@ -383,6 +414,16 @@ class ModchartEditButton extends UIButton {
 
 		wheel.members[wheel.members.length-2].setPosition(wheel.colorHexTextBox.x - 2, wheel.colorHexTextBox.y - 18); //hexlabel
 		wheel.members[wheel.members.length-1].setPosition(wheel.rgbNumSteppers[0].x - 2, wheel.rgbNumSteppers[0].y - 18); //rgblabel
+	}
+
+	public function saveToNode() {
+		itemData.name = nameInput.label.text;
+		itemData.file = fileInput.label.text;
+		itemData.color = colorInput.curColor;
+		itemData.colorString = colorInput.curColorString;
+		script.call("setDataValues", [itemData, this]);
+
+		return script.call("createNodeFromData", [itemData]);
 	}
 }
 
@@ -422,7 +463,9 @@ function postCreate() {
 	add(itemList);
 
 	var saveButton = new UIButton(windowSpr.x + windowSpr.bWidth - 20, windowSpr.y + windowSpr.bHeight - 16 - 32, "Save & Close", function() {
+		save();
 		close();
+		ITEM_EDIT_SAVE_CALLBACK();
 	});
 	saveButton.x -= saveButton.bWidth;
 	add(saveButton);
@@ -433,6 +476,14 @@ function postCreate() {
 	closeButton.color = 0xFFFF0000;
 	closeButton.x -= closeButton.bWidth;
 	add(closeButton);
+}
+
+function save() {
+	var initEvents = Xml.createElement("Init");
+	for (button in itemList.buttons.members) {
+		initEvents.addChild(button.saveToNode());
+	}
+	ITEM_EDIT_SAVED_INIT_EVENTS = initEvents;
 }
 
 function destroy() {

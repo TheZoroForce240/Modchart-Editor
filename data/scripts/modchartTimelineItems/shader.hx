@@ -211,3 +211,37 @@ function updateEditItem(data, itemButton) {
         });
     }
 }
+
+function setDataValues(data, itemButton) {
+
+    data.camGame = itemButton.menuObjects.get("camGameCheckbox").checked;
+    data.camHUD = itemButton.menuObjects.get("camHUDCheckbox").checked;
+    data.camOther = itemButton.menuObjects.get("camOtherCheckbox").checked;
+
+    for (i => prop in data.properties) {
+        var stepper = itemButton.extraValues[i];
+        stepper.__onChange(stepper.label.text);
+        prop.value = stepper.value;
+    }
+
+}
+
+function createNodeFromData(data) {
+    var node = Xml.createElement("Shader");
+    node.set("name", data.name);
+    node.set("shader", data.file);
+    node.set("color", data.colorString);
+
+    node.set("camGame", data.camGame ? "true" : "false");
+    node.set("camHUD", data.camHUD ? "true" : "false");
+    node.set("camOther", data.camOther ? "true" : "false");
+
+    for (prop in data.properties) {
+        var child = Xml.createElement("Property");
+        child.set("name", prop.name);
+        child.set("value", prop.value);
+        node.addChild(child);
+    }
+
+    return node;
+}

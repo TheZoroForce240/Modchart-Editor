@@ -37,6 +37,8 @@ public static var EVENT_EDIT_CANCEL_CALLBACK:Void->Void = null;
 public static var EVENT_DELETE_CALLBACK:Void->Void = null;
 
 public static var ITEM_EDIT_LOADED_SCRIPTS = ["" => null];
+public static var ITEM_EDIT_SAVE_CALLBACK:Void->Void = null;
+public static var ITEM_EDIT_SAVED_INIT_EVENTS = null;
 
 public static var CURRENT_XML:Xml;
 
@@ -46,6 +48,8 @@ function destroy() {
 	EVENT_EDIT_CALLBACK = null;
 	EVENT_EDIT_CANCEL_CALLBACK = null;
 	EVENT_DELETE_CALLBACK = null;
+	ITEM_EDIT_SAVE_CALLBACK = null;
+	ITEM_EDIT_SAVED_INIT_EVENTS = null;
 	ITEM_EDIT_LOADED_SCRIPTS = null;
 	CURRENT_XML = null;
 }
@@ -1120,13 +1124,15 @@ function updateEvents(?forceStep:Float = null) {
 }
 
 
-function buildXMLFromEvents() {
+function buildXMLFromEvents(?newInitEvents = null) {
 	var newXml = Xml.createElement("Modchart");
-	var initEvents = Xml.createElement("Init");
+	var initEvents = newInitEvents == null ? Xml.createElement("Init") : newInitEvents;
 	var xmlEvents = Xml.createElement("Events");
+
+	trace(newInitEvents);
 	
 	//copy init events
-	if (xml != null) {
+	if (xml != null && newInitEvents == null) {
 		for (list in xml.elementsNamed("Init")) {
 			for (name => script in itemScripts) {
 				script.call("copyXMLItems", [list, initEvents]);
@@ -1181,6 +1187,10 @@ function _exit() {
 function _modchart_edititems() {
 	CURRENT_XML = xml;
 	ITEM_EDIT_LOADED_SCRIPTS = itemScripts;
+	ITEM_EDIT_SAVE_CALLBACK = function() {
+		xml = buildXMLFromEvents(ITEM_EDIT_SAVED_INIT_EVENTS);
+		xml = buildXMLFromEvents(); //do twice just in case
+	}
 	var win = new UISubstateWindow(true, 'ModchartEditDataSubstate');
 	FlxG.sound.music.pause();
 	vocals.pause();

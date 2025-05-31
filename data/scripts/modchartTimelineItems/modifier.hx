@@ -68,7 +68,8 @@ function setupItemsFromXML(xml) {
         });
     }
 }
-function copyXML(xml, output) {
+
+function copyXMLItems(xml, output) {
     for (e in xml.elementsNamed("Modifier")) {
 
         var event = Xml.createElement("Modifier");
@@ -233,4 +234,41 @@ function updateEditItem(data, itemButton) {
             value: itemButton.extraValues[i].value
         });
     }
+}
+
+function setDataValues(data, itemButton) {
+    for (name in ["valueInput", "strumLineIDInput", "strumIDInput"]) {
+        var stepper = itemButton.menuObjects.get(name);
+        stepper.__onChange(stepper.label.text);
+    }
+
+    data.value = itemButton.menuObjects.get("valueInput").value;
+    data.strumLineID = itemButton.menuObjects.get("strumLineIDInput").value;
+    data.strumID = itemButton.menuObjects.get("strumIDInput").value;
+
+    for (i => prop in data.subMods) {
+        var stepper = itemButton.extraValues[i];
+        stepper.__onChange(stepper.label.text);
+        prop.value = stepper.value;
+    }
+}
+
+function createNodeFromData(data) {
+    var node = Xml.createElement("Modifier");
+    node.set("name", data.name);
+    node.set("modifier", data.file);
+    node.set("color", data.colorString);
+
+    node.set("value", data.value);
+    node.set("strumLineID", data.strumLineID);
+    node.set("strumID", data.strumID);
+
+    for (prop in data.subMods) {
+        var child = Xml.createElement("SubMod");
+        child.set("name", prop.name);
+        child.set("value", prop.value);
+        node.addChild(child);
+    }
+
+    return node;
 }
