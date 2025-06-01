@@ -1052,29 +1052,36 @@ function updateEvents(?forceStep:Float = null) {
 		if (events[i] == null) continue;
 
 		if (lastStep != currentStep) {
-			//check for next event
-			while(true) {
-				if (events[i].nextIndex == -1) {
-					break;
-				}
-				var nextIndex = events[i].nextIndex;
-				if (currentStep >= events[nextIndex].step) {
-					i = nextIndex;
-				} else {
-					break;
-				}
-			}
 
-			//check for last (for rewinding)
-			while(true) {
-				if (events[i].lastIndex == -1) {
-					break;
+			if (currentStep > lastStep) {
+				//check for next event
+				if (events[i].nextIndex != -1) {
+					while(true) {
+						var nextIndex = events[i].nextIndex;
+						if (currentStep >= events[nextIndex].step) {
+							i = nextIndex;
+							if (events[i].nextIndex == -1) {
+								break;
+							}
+						} else {
+							break;
+						}
+					}
 				}
-				var lastIndex = events[i].lastIndex;
-				if (currentStep < events[lastIndex].step + (events[lastIndex].time != null ? events[lastIndex].time : 0.0)) {
-					i = lastIndex;
-				} else {
-					break;
+			} else {
+				//check for last (for rewinding)
+				if (events[i].lastIndex != -1) {
+					while(true) {
+						var lastIndex = events[i].lastIndex;
+						if (currentStep < events[lastIndex].step + (events[lastIndex].time != null ? events[lastIndex].time : 0.0)) {
+							i = lastIndex;
+							if (events[i].lastIndex == -1) {
+								break;
+							}
+						} else {
+							break;
+						}
+					}
 				}
 			}
 		}
