@@ -9,6 +9,6 @@ function getEventNameFromItem(item) {
     return "addCameraZoom";
 }
 
-function setupDefaults() {
+function setupDefaultsEditor() {
     createTimelineItem("addCameraZoom", "addCameraZoom", null);
 }

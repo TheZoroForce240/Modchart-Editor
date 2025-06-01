@@ -24,7 +24,30 @@ function getEventNameFromItem(item) {
     return "tweenShaderProperty";
 }
 
-function setupItemsFromXML(xml) {
+function setupItemsFromXMLGame(xml) {
+    for (node in xml.elementsNamed("Shader")) {
+
+        var path = "modcharts/" + node.get("shader");
+        var s = new CustomShader(path);
+        
+        for (prop in node.elementsNamed("Property")) {
+            createModchartItem(node.get("name") + "." + prop.get("name"), prop.get("name"), "shader", Std.parseFloat(prop.get("value")), s);
+            s.hset(prop.get("name"), Std.parseFloat(prop.get("value")));
+        }
+
+        if (node.exists("camGame") && node.get("camGame") == "true") {
+            camGame.addShader(s);
+        }
+        if (node.exists("camHUD") && node.get("camHUD") == "true") {
+            camHUD.addShader(s);
+        }
+        if (node.exists("camOther") && node.get("camOther") == "true") {
+            camOther.addShader(s);
+        }
+    }
+}
+
+function setupItemsFromXMLEditor(xml) {
     for (node in xml.elementsNamed("Shader")) {
 
         var path = "modcharts/" + node.get("shader");

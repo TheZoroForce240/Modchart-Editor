@@ -13,17 +13,20 @@ function createEventGame(typeID, node, itemIndex) {
         "type": typeID,
         "step": Std.parseFloat(node.get("step")),
         "itemIndex": itemIndex,
-        "value": Std.parseFloat(event.get("value")) * (downscroll && node.exists("DI_value") && node.get("DI_value") == "true" ? -1 : 1),
+        "value": Std.parseFloat(node.get("value")) * (downscroll && node.exists("DI_value") && node.get("DI_value") == "true" ? -1 : 1),
         "time": Std.parseFloat(node.get("time")),
         "ease": CoolUtil.flxeaseFromString(node.get("ease"), ""),
         "startValue": Std.parseFloat(node.get("startValue")) * (downscroll && node.exists("DI_startValue") && node.get("DI_startValue") == "true" ? -1 : 1)
     };
 }
+function getItemNameFromXML(node) {
+    return node.get("name") + "." + node.get("property");
+}
 function updateEventGame(currentStep, e) {
     if (currentStep < e.step + e.time) {
         var l = (currentStep - e.step) * ((1) / ((e.step + e.time) - e.step));
         modchartItems[e.itemIndex].object.value = FlxMath.lerp(e.startValue, e.value, e.ease(l));
-        return false;
+        return false; //dont remove yet
     }
     modchartItems[e.itemIndex].object.value = e.value;
     return true;

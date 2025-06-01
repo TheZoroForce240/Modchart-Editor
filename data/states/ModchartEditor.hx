@@ -905,7 +905,7 @@ function loadSong() {
 
 function loadDefaults() {
 	for (name => script in itemScripts) {
-		script.call("setupDefaults", []);
+		script.call("setupDefaultsEditor", []);
 	}
 }
 
@@ -934,7 +934,7 @@ function loadEvents(reload) {
 
 	for (list in xml.elementsNamed("Init")) {
 		for (name => script in itemScripts) {
-			script.call("setupItemsFromXML", [list]);
+			script.call("setupItemsFromXMLEditor", [list]);
 		}
 	}
 	for (item in timelineItems) {

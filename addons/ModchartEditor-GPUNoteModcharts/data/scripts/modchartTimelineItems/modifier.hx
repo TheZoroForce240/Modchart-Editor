@@ -27,7 +27,36 @@ function getEventNameFromItem(item) {
     return "tweenModifierValue";
 }
 
-function setupItemsFromXML(xml) {
+function setupItemsFromXMLGame(xml) {
+    for (node in xml.elementsNamed("Modifier")) {
+        if (!noteModchart) {
+            noteModchart = true;
+            importScript("data/scripts/noteModchartManager.hx");
+            //useNotePaths = true;
+        }
+
+        var subMods = [];
+        for (sub in node.elementsNamed("SubMod")) {
+            subMods.push(new SubModifier(sub.get("name"), Std.parseFloat(sub.get("value"))));
+        }
+        var modifier = new Modifier(
+            node.get("name"), 
+            Std.parseFloat(node.get("value")),
+            Std.parseInt(node.get("strumLineID")),
+            Std.parseInt(node.get("strumID")),
+            subMods,
+            node.get("modifier")
+        );
+        modTable.addModifier(modifier);
+
+        createModchartItem(node.get("name") + ".value", "value", "modifier", Std.parseFloat(node.get("value")), modifier);
+        for (submod in subMods) {
+            createModchartItem(node.get("name") + "." + submod.name, submod.name, "modifier", submod.value, submod);
+        }
+    }
+}
+
+function setupItemsFromXMLEditor(xml) {
     for (node in xml.elementsNamed("Modifier")) {
         if (!noteModchart) {
             noteModchart = true;
@@ -108,6 +137,9 @@ function reloadItems() {
 }
 
 function postXMLLoad(xml) {
+    if (noteModchart) initModchart();
+}
+function postXMLLoadGame(xml) {
     if (noteModchart) initModchart();
 }
 function onFlipScroll(isDownscroll) {

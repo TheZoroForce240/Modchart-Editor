@@ -9,6 +9,6 @@ function getEventNameFromItem(item) {
     return "addHUDZoom";
 }
 
-function setupDefaults() {
+function setupDefaultsEditor() {
     createTimelineItem("addHUDZoom", "addHUDZoom", null);
 }
