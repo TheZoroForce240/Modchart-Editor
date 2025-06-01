@@ -31,7 +31,7 @@ import Xml;
 import ModchartEventObjects;
 import UIScrollBarHorizontal;
 
-public static var CURRENT_EVENT:EventObject = null; //event used by edit substate
+public static var CURRENT_EVENT = null; //event used by edit substate
 public static var EVENT_EDIT_EVENT_SCRIPT = null;
 public static var EVENT_EDIT_CALLBACK:Void->Void = null;
 public static var EVENT_EDIT_CANCEL_CALLBACK:Void->Void = null;
@@ -111,11 +111,9 @@ public function createTimelineItem(name, type, object) {
 	timelineIndexMap.set(name, timelineItems.length-1);
 	return timelineItem;
 }
-
+var eventRenderer = null;
 var eventIndexList = [0];
 var events = [];
-var eventGroup = null;
-var eventGroupContainer = null;
 
 //array<String>
 public var timelineList = [];
@@ -529,17 +527,9 @@ function postCreate() {
 
 	add(hoverBox);
 
-	eventGroup = new EventGroup();
-	eventGroup.active = eventGroup.visible = false;
-	add(eventGroup);
-	eventGroup.cameras = [camTimeline];
-
-	eventGroupContainer = new EventGroupContainer();
-	eventGroupContainer.eventGroup = eventGroup;
-	add(eventGroupContainer);
-
-	createEventObjects();
-
+	eventRenderer = new EventRenderer();
+	add(eventRenderer);
+	eventRenderer.cameras = [camTimeline];
 
 	selectionBox = new UISliceSprite(0, 0, 2, 2, 'editors/ui/selection');
 	selectionBox.visible = false;
@@ -641,7 +631,7 @@ function update(elapsed) {
 	} else {
 		conductorSprY = CoolUtil.fpsLerp(conductorSprY, curStepFloat * ROW_SIZE_X, __firstFrame ? 1 : 1/3);
 	}
-	eventGroup.conductorPos = conductorSprY/ROW_SIZE_X;
+	eventRenderer.conductorPos = conductorSprY/ROW_SIZE_X;
 
 	updateUI();
 	updateInputs();
@@ -664,6 +654,8 @@ function update(elapsed) {
 			Conductor.songPosition -= (__crochet*0.25 * (FlxG.keys.pressed.SHIFT ? 8.0 : 1.0) * FlxG.mouse.wheel) - Conductor.songOffset;
 		}
 	}
+
+	//trace(_timelineScrollY);
 
 	var songLength = FlxG.sound.music.length;
 	Conductor.songPosition = FlxMath.bound(Conductor.songPosition + Conductor.songOffset, 0, songLength);
@@ -739,6 +731,7 @@ function updateInputs() {
 	if(FlxG.keys.justPressed.ANY && currentFocus == null)
 		UIUtil.processShortcuts(topMenu);
 
+	eventRenderer.visible = !_fullscreen;
 	if (_fullscreen) return;
 
 	scrollBar.active = !isDragging;
@@ -752,12 +745,14 @@ function updateInputs() {
 		} else if (FlxG.mouse.justReleased) {
 			if (isDragging) {
 				resetSelection();
-				for(i in 0...eventGroup.members.length) {
-					var obj = eventGroup.members[i];
-					if (!selectedEvents.contains(obj) && 
-						(selectionBox.x + selectionBox.bWidth > obj.x) && (selectionBox.x < obj.x + obj.width) && 
-						(selectionBox.y + selectionBox.bHeight > obj.y) && (selectionBox.y < obj.y + obj.height)) {
-						selectEvent(obj, false);
+				for (e in events) {
+					if (!selectedEvents.contains(e)) {
+						var x = e.step * ROW_SIZE_X;
+						var y = e.timelineIndex * ROW_SIZE_Y;
+						if ((selectionBox.x + selectionBox.bWidth > x) && (selectionBox.x < x + 20) && 
+							(selectionBox.y + selectionBox.bHeight > y) && (selectionBox.y < y + 20)) {
+							selectEvent(e, false);
+						}
 					}
 				}
 			}
@@ -782,31 +777,37 @@ function updateInputs() {
 			selectionBox.bHeight = Std.int(Math.abs(mousePos.y - dragStartPos.y));
 		}
 
-		eventGroup.size = ROW_SIZE_X;
+		eventRenderer.sizeX = ROW_SIZE_X;
+		eventRenderer.sizeY = ROW_SIZE_Y;
+		eventRenderer._timelineScrollY = camTimeline.scroll.y;
+		/*
 		for(i in eventGroup.getVisibleStartIndex()...eventGroup.getVisibleEndIndex()) {
 			var obj = eventGroup.members[i];
 			obj.x = obj.event.step * ROW_SIZE_X;
 			obj.y = obj.timelineIndex * ROW_SIZE_Y;
 			obj.updateLength(ROW_SIZE_X);
 		}
+		*/
 
 
 		if (FlxG.mouse.justReleased && !isDragging && timelineWindow.hovered) {
-			var clickedEvent:EventObject = null;
-			for(i in eventGroup.getVisibleStartIndex()...eventGroup.getVisibleEndIndex()) {
-				var obj = eventGroup.members[i];
-				if (obj.overlapsPoint(mousePos, true)) {
+			var clickedEvent = null;
+			for(i in eventRenderer.getVisibleStartIndex()...eventRenderer.getVisibleEndIndex()) {
+				var e = events[i];
+				var x = e.step * ROW_SIZE_X;
+				var y = e.timelineIndex * ROW_SIZE_Y;
+				if ((mousePos.x >= x) && (mousePos.x < x + 20) && (mousePos.y >= y) && (mousePos.y < y + 20)) {
 					if (clickedEvent == null) {
-						clickedEvent = obj;
+						clickedEvent = e;
 					}
 					break;
 				}
 			}
 
 			if (FlxG.keys.pressed.CONTROL) {
-				if (clickedEvent != null)
+				if (clickedEvent != null) {
 					selectEvent(clickedEvent, false);
-
+				}
 			} else {
 				if (clickedEvent == null) {
 					var step = quantStep((mousePos.x)/ROW_SIZE_X);
@@ -844,6 +845,7 @@ function addEvent(step, item) {
 	if (e != null) {
 		SortedArrayUtil.addSorted(events, e, function(n){return n.step;});
 
+		/*
 		var obj = new EventObject(e);
 		obj.timelineIndex = timelineItems.indexOf(item);
 		obj.x = e.step * ROW_SIZE_X;
@@ -851,37 +853,31 @@ function addEvent(step, item) {
 		obj.cameras = [camTimeline];
 		eventGroup.addSorted(obj); 
 		obj.updateEvent();
+		*/
 		refreshEventTimings();
 
-		editEvent(obj, true);
+		editEvent(e, true);
 	}
 	resetSelection();
 }
 
-function editEvent(e:EventObject, justPlaced:Bool) {
+function editEvent(e, justPlaced:Bool) {
 	CURRENT_EVENT = e;
-	EVENT_EDIT_EVENT_SCRIPT = eventScripts.get(e.event.type);
+	EVENT_EDIT_EVENT_SCRIPT = eventScripts.get(e.type);
 	EVENT_EDIT_CALLBACK = function() {
-		e.updateEvent();
 		refreshEventTimings();
 	}
 	EVENT_EDIT_CANCEL_CALLBACK = function() {
 		if (justPlaced) {
-			events.remove(e.event);
-			e.event = null;
-			eventGroup.members.remove(e);
+			events.remove(e);
 			e = null;
-		} else {
-			e.updateEvent();
 		}
 		
 		refreshEventTimings();
 	}
 	EVENT_DELETE_CALLBACK = function() {
 		if (selectedEvents.contains(e)) selectedEvents.remove(e);
-		events.remove(e.event);
-		e.event = null;
-		eventGroup.members.remove(e);
+		events.remove(e);
 		e = null;
 		
 		refreshEventTimings();
@@ -966,11 +962,13 @@ function loadEvents(reload) {
 	if (reload) {
 		createTimelineUI();
 
+		/*
 		for(i in 0...eventGroup.members.length) {
 			var obj = eventGroup.members[i];
 			var n = callEventScriptFromEvent(obj.event, "getItemName", [obj.event]);
 			obj.timelineIndex = timelineList.indexOf(n);
 		}
+		*/
 	}
 }
 
@@ -1000,6 +998,9 @@ function refreshEventTimings() {
 		var n = callEventScriptFromEvent(e, "getItemName", [e]);
 		var itemIndex = timelineIndexMap.get(n);
 		e.lastValue = timelineItems[itemIndex].currentValue;
+		e.timelineIndex = itemIndex;
+		if (e.time != null) e.easeIndex = shaderEaseList.indexOf(e.ease);
+		if (e.selected == null) e.selected = false;
 
 		if (eventIndexList[itemIndex] == -1) {
 			eventIndexList[itemIndex] = i;
@@ -1016,6 +1017,7 @@ function refreshEventTimings() {
 		}
 	}
 }
+/*
 function createEventObjects() {
 	for (i in 0...events.length) {
 		var e = events[i];
@@ -1030,6 +1032,7 @@ function createEventObjects() {
 		obj.updateEvent();
 	}
 }
+*/
 
 var lastStep = Math.NEGATIVE_INFINITY;
 function updateEvents(?forceStep:Float = null) {
@@ -1284,22 +1287,16 @@ function _playback_forward(_) {
 	Conductor.songPosition += (Conductor.beatsPerMeasure * __crochet);
 }
 
-
-
-
-
-function selectEvent(e:EventObject, reset:Bool) {
+function selectEvent(e, reset:Bool) {
 	if (reset) {
 		resetSelection();
 	}
 	SortedArrayUtil.addSorted(selectedEvents, e, function(n){return n.step;});
 	e.selected = true;
-	e.updateEvent();
 }
 function resetSelection() {
 	for (event in selectedEvents) {
 		event.selected = false;
-		event.updateEvent();
 	}
 	selectedEvents = [];
 }
@@ -1314,7 +1311,7 @@ function _edit_redo() {
 function _edit_copy() {
 	clipboard = [];
 	for (event in selectedEvents) {
-		clipboard.push(callEventScriptFromEvent(event.event, "copyEventEditor", [event.event]));
+		clipboard.push(callEventScriptFromEvent(event, "copyEventEditor", [event]));
 	}
 	clipboard.sort(function(a, b) {
 		if(a.step < b.step) return -1;
@@ -1325,25 +1322,16 @@ function _edit_copy() {
 function _edit_paste() {
 	resetSelection();
 	if (clipboard.length > 0) {
-		var diff = curStep - clipboard[0].step;
+		var diff = curStep - clipboard[0].step; //TODO: maybe switch to use mouse pos instead?
 
-		trace(clipboard[0].step);
-		trace(diff);
+		//trace(clipboard[0].step);
+		//trace(diff);
 
 		for (event in clipboard) {
 			var e = callEventScriptFromEvent(event, "copyEventEditor", [event]);
-			var n = callEventScriptFromEvent(e, "getItemName", [e]);
-
 			e.step += diff;
-
 			SortedArrayUtil.addSorted(events, e, function(n){return n.step;});
-			var obj = new EventObject(e);
-			obj.timelineIndex = timelineList.indexOf(name);
-			obj.x = e.step*ROW_SIZE_X;
-			obj.y = obj.timelineIndex*ROW_SIZE_Y;
-			obj.cameras = [camTimeline];
-			eventGroup.addSorted(obj); 
-			selectEvent(obj, false);
+			selectEvent(e, false);
 		}
 
 		refreshEventTimings();
@@ -1355,28 +1343,22 @@ function _edit_cut() {
 }
 function _edit_delete() {
 	for (e in selectedEvents) {
-		events.remove(e.event);
-		e.event = null;
-		eventGroup.members.remove(e);
+		events.remove(e);
 	}
 	selectedEvents = [];
 	refreshEventTimings();
 }
 function _edit_shiftleft() {
 	for (event in selectedEvents) {
-		event.event.step -= 1;
-		if (event.event.step < 0) event.event.step = 0;
-		event.x = event.event.step*ROW_SIZE_X;
-		event.updateEvent();
+		event.step -= 1;
+		if (event.step < 0) event.step = 0;
 	}
 	sortAllEvents();
 	refreshEventTimings();
 }
 function _edit_shiftright() {
 	for (event in selectedEvents) {
-		event.event.step += 1;
-		event.x = event.event.step*ROW_SIZE_X;
-		event.updateEvent();
+		event.step += 1;
 	}
 	sortAllEvents();
 	refreshEventTimings();
@@ -1386,11 +1368,6 @@ function sortAllEvents() {
 	events.sort(function(a, b) {
 		if(a.step < b.step) return -1;
 		else if(a.step > b.step) return 1;
-		else return 0;
-	});
-	eventGroup.members.sort(function(a, b) {
-		if(eventGroup.getVarForEachAdd(a) < eventGroup.getVarForEachAdd(b)) return -1;
-		else if(eventGroup.getVarForEachAdd(a) > eventGroup.getVarForEachAdd(b)) return 1;
 		else return 0;
 	});
 }

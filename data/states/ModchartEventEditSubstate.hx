@@ -67,7 +67,7 @@ var eventEditWindowData = {
 };
 
 function create() {	
-	winTitle = "Edit Modchart Event - " + EVENT_EDIT_EVENT_SCRIPT.call("getDisplayName", [CURRENT_EVENT.event]);
+	winTitle = "Edit Modchart Event - " + EVENT_EDIT_EVENT_SCRIPT.call("getDisplayName", [CURRENT_EVENT]);
 	winWidth = EVENT_EDIT_EVENT_SCRIPT.call("getEventWindowWidth", []);
 	winHeight = EVENT_EDIT_EVENT_SCRIPT.call("getEventWindowHeight", []);
 }
@@ -115,12 +115,12 @@ function postCreate() {
 	eventEditWindowData.createEaseBoxes = createEaseBoxes;
 	eventEditWindowData.changeEaseFunc = changeEaseFunc;
 
-	EVENT_EDIT_EVENT_SCRIPT.call("setupEventWindow", [CURRENT_EVENT.event, propertyMap, eventEditWindowData]);
+	EVENT_EDIT_EVENT_SCRIPT.call("setupEventWindow", [CURRENT_EVENT, propertyMap, eventEditWindowData]);
 
-	trace(CURRENT_EVENT.event);
+	trace(CURRENT_EVENT);
 
 	var saveButton = new UIButton(windowSpr.x + windowSpr.bWidth - 20, windowSpr.y + windowSpr.bHeight - 16 - 32, "Save & Close", function() {
-		EVENT_EDIT_EVENT_SCRIPT.call("saveEventWindow", [CURRENT_EVENT.event, propertyMap]);
+		EVENT_EDIT_EVENT_SCRIPT.call("saveEventWindow", [CURRENT_EVENT, propertyMap]);
 		EVENT_EDIT_CALLBACK();
 		close();
 	});
@@ -185,7 +185,7 @@ function createEaseBoxes() {
 		spr.y = eventEditWindowData.curY + 40;
 		easeBoxes.push(spr);
 	}
-	easeFunc = CoolUtil.flxeaseFromString(CURRENT_EVENT.event.ease, "");
+	easeFunc = CoolUtil.flxeaseFromString(CURRENT_EVENT.ease, "");
 }
 function changeEaseFunc(newFunc) {
 	easeFunc = newFunc;

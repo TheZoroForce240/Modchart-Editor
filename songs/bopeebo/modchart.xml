@@ -1,36 +1,36 @@
 <Modchart>
 	<Init>
-		<Shader camHUD="true" shader="BloomEffect" camGame="true" camOther="false" name="bloom2" color="#FFFFFF">
-			<Property name="effect" value="0"/>
-			<Property name="strength" value="0"/>
-			<Property name="brightness" value="0"/>
-			<Property name="contrast" value="1"/>
+		<Shader camHUD="true" camOther="false" camGame="true" shader="BloomEffect" name="bloom2" color="#FFFFFF">
+			<Property value="1" name="contrast"/>
+			<Property value="0" name="strength"/>
+			<Property value="0" name="effect"/>
+			<Property value="0" name="brightness"/>
 		</Shader>
-		<Shader camHUD="false" shader="MirrorRepeatEffect" camGame="true" camOther="false" name="mirror" color="#FF0000">
-			<Property name="x" value="0"/>
-			<Property name="y" value="0"/>
-			<Property name="angle" value="-30"/>
-			<Property name="zoom" value="1"/>
-			<Property name="warp" value="0"/>
-			<Property name="iTime" value="0"/>
-			<Property name="speed" value="1"/>
-			<Property name="xRange" value="0"/>
-			<Property name="yRange" value="0"/>
-			<Property name="angleRange" value="0"/>
+		<Shader camHUD="false" camOther="false" camGame="true" shader="MirrorRepeatEffect" name="mirror" color="#FF0000">
+			<Property value="0" name="warp"/>
+			<Property value="0" name="x"/>
+			<Property value="0" name="y"/>
+			<Property value="0" name="angleRange"/>
+			<Property value="-30" name="angle"/>
+			<Property value="1" name="zoom"/>
+			<Property value="0" name="yRange"/>
+			<Property value="0" name="xRange"/>
+			<Property value="0" name="iTime"/>
+			<Property value="1" name="speed"/>
 		</Shader>
-		<Modifier strumLineID="1" strumID="-1" value="3" name="rotate" modifier="strumLineRotate" color="#FF00FF">
-			<SubMod name="x" value="0"/>
-			<SubMod name="y" value="0"/>
-			<SubMod name="z" value="0"/>
+		<Modifier strumID="-1" strumLineID="1" value="3" name="rotate" modifier="strumLineRotate" color="#FF00FF">
+			<SubMod value="0" name="z"/>
+			<SubMod value="0" name="x"/>
+			<SubMod value="0" name="y"/>
 		</Modifier>
-		<Modifier strumLineID="-1" strumID="-1" value="2" name="drunk" modifier="drunk" color="#00FF00">
-			<SubMod name="speed" value="4"/>
+		<Modifier strumID="-1" strumLineID="-1" value="2" name="drunk" modifier="drunk" color="#00FF00">
+			<SubMod value="4" name="speed"/>
 		</Modifier>
 	</Init>
 	<Events>
 		<Event step="0" time="32" value="0" property="angle" ease="cubeOut" type="tweenShaderProperty" startValue="-30" name="mirror"/>
 		<Event step="16" time="4" value="4" property="value" ease="cubeInOut" type="tweenModifierValue" startValue="2" name="drunk"/>
-		<Event step="32" time="20" value="360" property="y" ease="cubeInOut" type="tweenModifierValue" startValue="0" name="rotate"/>
+		<Event step="32" time="20" value="720" property="y" ease="cubeInOut" type="tweenModifierValue" startValue="0" name="rotate"/>
 		<Event step="112" time="8" value="3" property="zoom" ease="cubeOut" type="tweenShaderProperty" startValue="1" name="mirror"/>
 		<Event step="120" time="8" value="1" property="zoom" ease="cubeIn" type="tweenShaderProperty" startValue="3" name="mirror"/>
 		<Event step="128" time="16" value="0" property="effect" ease="cubeOut" type="tweenShaderProperty" startValue="0.25" name="bloom2"/>
