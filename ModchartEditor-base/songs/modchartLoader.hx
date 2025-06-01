@@ -69,8 +69,6 @@ function getEventTypeID(name) {
 	return -1;
 }
 
-var noteModchart = false;
-
 function destroy() {
 	for (e in modchartItems) e = null;
 	modchartItems.splice(0, modchartItems.length);
@@ -88,6 +86,7 @@ function loadEvents() {
 	var xml = Xml.parse(Assets.getText(xmlPath)).firstElement();
 
 	for (list in xml.elementsNamed("Init")) {
+		/*
 		for (node in list.elementsNamed("Shader")) {
 
 			var path = "modcharts/" + node.get("shader");
@@ -134,10 +133,12 @@ function loadEvents() {
 				createModchartItem(node.get("name"), submod.name, 0, submod.value, submod);
 			}
 		}
+		*/
 	}
 	
 	for (list in xml.elementsNamed("Events")) {
 		for (event in list.elementsNamed("Event")) {
+			/*
 			switch(event.get("type")) {
 				case "setShaderProperty" | "setModifierValue":
 					var name = event.get("name");
@@ -182,6 +183,7 @@ function loadEvents() {
 						"value": Std.parseFloat(event.get("value"))
 					});
 			}
+			*/
 		}
 	}
 	initModchart();
@@ -203,37 +205,7 @@ function postUpdate(elapsed) {
 		}
 
 		if (curStepFloat >= e.step) {
-			switch(e.type) {
-				case 0:
-					modchartItems[e.itemIndex].hset(modchartItems[e.itemIndex].property, e.value);
-					events.remove(e);
-				case 2:
-					modchartItems[e.itemIndex].object.value = e.value;
-					events.remove(e);
-				case 1:
-					if (curStepFloat < e.step + e.time) {
-						var l = (curStepFloat - e.step) * ((1) / ((e.step + e.time) - e.step));		
-						modchartItems[e.itemIndex].hset(modchartItems[e.itemIndex].property, FlxMath.lerp(e.startValue, e.value, e.ease(l)));
-					} else {
-						trace(e);
-						modchartItems[e.itemIndex].hset(modchartItems[e.itemIndex].property, e.value);
-						events.remove(e);
-					}
-				case 3:
-					if (curStepFloat < e.step + e.time) {
-						var l = (curStepFloat - e.step) * ((1) / ((e.step + e.time) - e.step));		
-						modchartItems[e.itemIndex].object.value = FlxMath.lerp(e.startValue, e.value, e.ease(l));
-					} else {
-						modchartItems[e.itemIndex].object.value = e.value;
-						events.remove(e);
-					}
-				case 4:
-					camGame.zoom += e.value;
-					events.remove(e);
-				case 5:
-					camHUD.zoom += e.value;
-					events.remove(e);
-			}
+			
 		}
 	}
 
@@ -254,11 +226,11 @@ function create() {
 }
 function postCreate() {
 	if (!modcharts) return;
-
 	loadEvents();
 }
 
-function getEase(ease:String)
+//maybe kill this
+public function getEase(ease:String)
 {
 	switch (ease.toLowerCase())
 	{

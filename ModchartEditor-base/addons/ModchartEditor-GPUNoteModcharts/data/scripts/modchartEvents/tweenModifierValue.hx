@@ -8,6 +8,27 @@ import funkin.editors.ui.UICheckbox;
 
 trace("Loaded Event Script: tweenModifierValue");
 
+function createEventGame(typeID, node, itemIndex) {
+    return {
+        "type": typeID,
+        "step": Std.parseFloat(node.get("step")),
+        "itemIndex": itemIndex,
+        "value": Std.parseFloat(event.get("value")) * (downscroll && node.exists("DI_value") && node.get("DI_value") == "true" ? -1 : 1),
+        "time": Std.parseFloat(node.get("time")),
+        "ease": CoolUtil.flxeaseFromString(node.get("ease"), ""),
+        "startValue": Std.parseFloat(node.get("startValue")) * (downscroll && node.exists("DI_startValue") && node.get("DI_startValue") == "true" ? -1 : 1)
+    };
+}
+function updateEventGame(currentStep, e) {
+    if (currentStep < e.step + e.time) {
+        var l = (currentStep - e.step) * ((1) / ((e.step + e.time) - e.step));
+        modchartItems[e.itemIndex].object.value = FlxMath.lerp(e.startValue, e.value, e.ease(l));
+        return false;
+    }
+    modchartItems[e.itemIndex].object.value = e.value;
+    return true;
+}
+
 function createEventEditor(name, step, item) {
     var data = name.split(".");
     return {

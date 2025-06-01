@@ -8,6 +8,18 @@ import funkin.editors.ui.UICheckbox;
 
 trace("Loaded Event Script: addHUDZoom");
 
+function createEventGame(typeID, node, itemIndex) {
+    return {
+        "type": typeID,
+        "step": Std.parseFloat(node.get("step")),
+        "value": Std.parseFloat(node.get("value"))
+    };
+}
+function updateEventGame(currentStep, e) {
+    camGame.zoom += e.value;
+    return true;
+}
+
 function createEventEditor(name, step, item) {
     return {
         "type": "addHUDZoom",
