@@ -23,6 +23,7 @@
 		<Event step="0" time="32" value="0" property="angle" ease="cubeOut" type="tweenShaderProperty" startValue="-30" name="mirror"/>
 		<Event step="16" time="4" value="4" property="value" ease="cubeInOut" type="tweenModifierValue" startValue="2" name="drunk"/>
 		<Event step="32" time="20" value="720" property="y" ease="cubeInOut" type="tweenModifierValue" startValue="0" name="rotate"/>
+		<Event step="88" type="addHUDZoom" value="0.11"/>
 		<Event step="112" time="8" value="3" property="zoom" ease="cubeOut" type="tweenShaderProperty" startValue="1" name="mirror"/>
 		<Event step="120" time="8" value="1" property="zoom" ease="cubeIn" type="tweenShaderProperty" startValue="3" name="mirror"/>
 		<Event step="128" time="16" value="0" property="effect" ease="cubeOut" type="tweenShaderProperty" startValue="0.25" name="bloom2"/>
