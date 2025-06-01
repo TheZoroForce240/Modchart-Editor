@@ -1,11 +1,11 @@
 <Modchart>
 	<Init>
-		<FunkinModifier strumLineID="-1" value="1" playFieldID="-1" mod="tipsy" modClass="tipsy" color="#545454" name="tipsy"/>
+		<FunkinModifier strumLineID="1" value="1" playFieldID="-1" mod="tipsy" modClass="tipsy" color="#C5FF09" name="tipsy"/>
 		<FunkinModifier strumLineID="-1" value="2" playFieldID="-1" mod="drunk" modClass="drunk" color="#C3FF00" name="drunk"/>
-		<FunkinModifier strumLineID="-1" value="0" playFieldID="-1" mod="centerRotateX" modClass="centerrotate" color="#FF0000" name="centerRotateX"/>
-		<FunkinModifier strumLineID="-1" value="0" playFieldID="-1" mod="centerRotateY" modClass="centerrotate" color="#24F800" name="centerRotateY"/>
-		<FunkinModifier strumLineID="-1" value="0" playFieldID="-1" mod="centerRotateZ" modClass="centerrotate" color="#006DFF" name="centerRotateZ"/>
 		<FunkinModifier strumLineID="-1" value="0" playFieldID="-1" mod="beatz" modClass="beat" color="#545454" name="beatZ"/>
+		<FunkinModifier strumLineID="-1" value="0" playFieldID="-1" mod="centerRotateX" modClass="centerrotate" color="#FF0000" name="centerRotateX"/>
+		<FunkinModifier strumLineID="-1" value="0" playFieldID="-1" mod="centerRotateY" modClass="centerrotate" color="#F80000" name="centerRotateY"/>
+		<FunkinModifier strumLineID="-1" value="0" playFieldID="-1" mod="centerRotateZ" modClass="centerrotate" color="#FF0000" name="centerRotateZ"/>
 		<Shader camHUD="true" shader="BloomEffect" camGame="true" camOther="false" color="#FFFFFF" name="bloom2">
 			<Property name="contrast" value="1"/>
 			<Property name="strength" value="0"/>
@@ -27,10 +27,10 @@
 	</Init>
 	<Events>
 		<Event step="0" time="32" value="0" property="angle" ease="cubeOut" type="tweenShaderProperty" startValue="-30" name="mirror"/>
-		<Event step="16" time="4" value="1" ease="cubeInOut" type="tweenModPercent" startValue="0" name="beatZ"/>
-		<Event step="32" time="16" value="2" ease="cubeInOut" type="tweenModPercent" startValue="1" name="tipsy"/>
+		<Event step="16" time="4" value="3" ease="cubeInOut" type="tweenModPercent" startValue="0" name="beatZ"/>
+		<Event step="24" time="16" value="0" ease="cubeInOut" type="tweenModPercent" startValue="1" name="tipsy"/>
 		<Event step="48" time="20" value="360" ease="cubeInOut" type="tweenModPercent" startValue="0" name="centerRotateY"/>
-		<Event step="64" time="20" value="180" ease="cubeInOut" type="tweenModPercent" startValue="0" name="centerRotateX"/>
+		<Event step="64" time="48" value="720" ease="backInOut" type="tweenModPercent" startValue="0" name="centerRotateX"/>
 		<Event step="88" type="addHUDZoom" value="0.11"/>
 		<Event step="112" time="8" value="3" property="zoom" ease="cubeOut" type="tweenShaderProperty" startValue="1" name="mirror"/>
 		<Event step="120" time="8" value="1" property="zoom" ease="cubeIn" type="tweenShaderProperty" startValue="3" name="mirror"/>

@@ -18,136 +18,7 @@ import Xml;
 import modchart.Manager;
 import modchart.core.ModifierGroup;
 import modchart.standalone.Adapter;
-import modchart.standalone.adapters.codename.Codename;
-
-
-class EditorAdapter extends modchart.standalone.adapters.codename.Codename {
-    public var downscroll = false;
-    public var strumLines = [];
-    public var camHUD = null;
-    public var scrollSpeed = 2.0;
-
-	public function new() {}
-
-	public function onModchartingInitialization() {
-		__fCrochet = Conductor.crochet;
-	}
-
-	public function isTapNote(sprite:FlxSprite) {
-		return false;
-	}
-
-	// Song related
-	public function getSongPosition():Float {
-		return Conductor.songPosition;
-	}
-
-	public function getCurrentBeat():Float {
-		return Conductor.curBeatFloat;
-	}
-
-	public function getStaticCrochet():Float {
-		return __fCrochet;
-	}
-
-	public function getBeatFromStep(step:Float):Float {
-		return step * Conductor.stepsPerBeat;
-	}
-
-	public function arrowHit(arrow:FlxSprite) {
-		return false;
-	}
-
-	public function isHoldEnd(arrow:FlxSprite) {
-		return false;
-	}
-
-	public function getLaneFromArrow(arrow:FlxSprite) {
-		return arrow.ID;
-	}
-
-	public function getPlayerFromArrow(arrow:FlxSprite) {
-        for (i => group in strumLines) {
-            if (group.contains(arrow)) return i;
-        }
-		return 0;
-	}
-
-	public function getHoldParentTime(arrow:FlxSprite) {
-		return 0;
-	}
-
-	// im so fucking sorry for those conditionals
-	public function getKeyCount(?player:Int = 0):Int {
-		return strumLines != null && strumLines[player] != null ? strumLines[player].length : 4;
-	}
-
-	public function getPlayerCount():Int {
-		return strumLines != null ? strumLines.length : 2;
-	}
-
-	public function getTimeFromArrow(arrow:FlxSprite) {
-		return 0;
-	}
-
-	public function getHoldSubdivisions():Int {
-		final val = Options.modchartingHoldSubdivisions;
-		return val < 1 ? 1 : val;
-	}
-
-	public function getDownscroll():Bool {
-		return downscroll;
-	}
-
-	public function getDefaultReceptorX(lane:Int, player:Int):Float {
-		return strumLines[player][lane].x;
-	}
-
-	public function getDefaultReceptorY(lane:Int, player:Int):Float {
-		return strumLines[player][lane].y;
-	}
-
-	public function getArrowCamera():Array<FlxCamera>
-		return [camHUD];
-
-	public function getCurrentScrollSpeed():Float {
-		return scrollSpeed;
-	}
-
-	// 0 receptors
-	// 1 tap arrows
-	// 2 hold arrows
-	// 3 lane attachments
-	public function getArrowItems() {
-		var pspr:Array<Array<Array<FlxSprite>>> = [];
-
-        
-		var strumLineMembers = strumLines;
-
-		for (i in 0...strumLineMembers.length) {
-			var sl = strumLineMembers[i];
-
-			//final splashHandler = PlayState.instance.splashHandler;
-
-			// this is somehow more optimized than how i used to do it (thanks neeo for the code!!)
-			pspr[i] = [];
-			pspr[i][0] = sl.copy();
-			pspr[i][1] = [];
-			pspr[i][2] = [];
-		}
-        
-
-		return pspr;
-	}
-}
-
-class EditorManager extends modchart.Manager {
-    override public function new() {
-        Manager.instance = this;
-
-		addPlayfield();
-    }
-}
+import EditorAdapter;
 
 trace("Loaded Item Script: funkinModifier");
 
@@ -159,27 +30,29 @@ function getEventNameFromItem(item) {
 }
 
 var setup = false;
-
 function setupDefaultsEditor() {
     if (!setup) {
         
-        var funkin_modchart_instance:EditorManager = new EditorManager();
-        //funkin_modchart_instance.setPercent("arrowPathDivisions", 8, -1); //shit is way too slow
+        
+        var funkin_modchart_instance = new Manager();
+        //funkin_modchart_instance.setPercent("arrowPathDivisions", 4, -1); //shit is way too slow
         //funkin_modchart_instance.renderArrowPaths = true;
         Adapter.instance = new EditorAdapter();
-		Adapter.instance.onModchartingInitialization();
+        Adapter.instance.onModchartingInitialization();
         Adapter.instance.downscroll = downscroll;
         Adapter.instance.strumLines = strumLines;
         Adapter.instance.camHUD = camHUD;
         Adapter.instance.scrollSpeed = PlayState.SONG.scrollSpeed;
-        // On your create function.
         add(funkin_modchart_instance);
 
-        //funkin_modchart_instance.addModifier("drunk", -1);
-        //funkin_modchart_instance.setPercent("drunk", 2, -1);
-
-        //funkin_modchart_instance.setPercent("reverse", 1, -1);
-
+        setup = true;
+    }
+}
+function setupDefaultsGame() {
+    if (!setup) {
+        Adapter.instance = new Codename();
+        var funkin_modchart_instance = new Manager();
+        add(funkin_modchart_instance);
         setup = true;
     }
 }
@@ -187,12 +60,14 @@ function setupDefaultsEditor() {
 function setupItemsFromXMLGame(xml) {
     for (node in xml.elementsNamed("FunkinModifier")) {
     
-        /*
-        createModchartItem(node.get("name") + ".value", "value", "modifier", Std.parseFloat(node.get("value")), modifier);
-        for (submod in subMods) {
-            createModchartItem(node.get("name") + "." + submod.name, submod.name, "modifier", submod.value, submod);
+        var item = createModchartItem(node.get("name"), node.get("mod"), "funkinModifier", Std.parseFloat(node.get("value")), node.get("mod"));
+        item.strumLineID = Std.parseInt(node.get("strumLineID"));
+        item.playFieldID = Std.parseInt(node.get("playFieldID"));
+
+        if (StringTools.trim(node.get("modClass")) != "") {
+            Manager.instance.addModifier(node.get("modClass"), item.playFieldID);
+            Manager.instance.setPercent(item.object, item.value, item.strumLineID, item.playFieldID);
         }
-        */
     }
 }
 
@@ -201,13 +76,14 @@ function setupItemsFromXMLEditor(xml) {
         var tlStartIndex = timelineList.length;
 
         var item = createTimelineItem(node.get("name"), "funkinModifier", node.get("mod"));
+        item.strumLineID = Std.parseInt(node.get("strumLineID"));
         item.playFieldID = Std.parseInt(node.get("playFieldID"));
         item.modClass = node.get("modClass");
         item.defaultValue = Std.parseFloat(node.get("value"));
 
         if (StringTools.trim(item.modClass) != "") {
             Manager.instance.addModifier(item.modClass, item.playFieldID);
-            Manager.instance.setPercent(item.object, item.defaultValue, item.playFieldID);
+            Manager.instance.setPercent(item.object, item.defaultValue, item.strumLineID, item.playFieldID);
         }
 
         timelineGroups.push({
@@ -237,8 +113,7 @@ function updateItem(item, i) {
         text.text = Std.string(FlxMath.roundDecimal(item.currentValue, 2));
     }
 
-    //item.object.value = item.currentValue;
-    Manager.instance.setPercent(item.object, item.currentValue, item.playFieldID);
+    Manager.instance.setPercent(item.object, item.currentValue, item.strumLineID, item.playFieldID);
 }
 
 function reloadItems() {

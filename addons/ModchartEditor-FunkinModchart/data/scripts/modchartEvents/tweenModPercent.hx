@@ -5,6 +5,7 @@ import funkin.editors.ui.UINumericStepper;
 import funkin.editors.ui.UIDropDown;
 import funkin.editors.ui.UIButton;
 import funkin.editors.ui.UICheckbox;
+import modchart.Manager;
 
 trace("Loaded Event Script: tweenModPercent");
 
@@ -25,10 +26,10 @@ function getItemNameFromXML(node) {
 function updateEventGame(currentStep, e) {
     if (currentStep < e.step + e.time) {
         var l = (currentStep - e.step) * ((1) / ((e.step + e.time) - e.step));
-        //modchartItems[e.itemIndex].object.value = FlxMath.lerp(e.startValue, e.value, e.ease(l));
+        Manager.instance.setPercent(modchartItems[e.itemIndex].object, FlxMath.lerp(e.startValue, e.value, e.ease(l)), modchartItems[e.itemIndex].strumLineID, modchartItems[e.itemIndex].playFieldID);
         return false; //dont remove yet
     }
-    //modchartItems[e.itemIndex].object.value = e.value;
+    Manager.instance.setPercent(modchartItems[e.itemIndex].object, e.value, modchartItems[e.itemIndex].strumLineID, modchartItems[e.itemIndex].playFieldID);
     return true;
 }
 
