@@ -1,28 +1,36 @@
 <Modchart>
 	<Init>
-		<Shader camHUD="true" camOther="false" camGame="true" shader="BloomEffect" name="bloom2" color="#FFFFFF">
-			<Property value="1" name="contrast"/>
-			<Property value="0" name="strength"/>
-			<Property value="0" name="effect"/>
-			<Property value="0" name="brightness"/>
+		<FunkinModifier strumLineID="-1" value="1" playFieldID="-1" mod="tipsy" modClass="tipsy" color="#545454" name="tipsy"/>
+		<FunkinModifier strumLineID="-1" value="2" playFieldID="-1" mod="drunk" modClass="drunk" color="#C3FF00" name="drunk"/>
+		<FunkinModifier strumLineID="-1" value="0" playFieldID="-1" mod="centerRotateX" modClass="centerrotate" color="#FF0000" name="centerRotateX"/>
+		<FunkinModifier strumLineID="-1" value="0" playFieldID="-1" mod="centerRotateY" modClass="centerrotate" color="#24F800" name="centerRotateY"/>
+		<FunkinModifier strumLineID="-1" value="0" playFieldID="-1" mod="centerRotateZ" modClass="centerrotate" color="#006DFF" name="centerRotateZ"/>
+		<FunkinModifier strumLineID="-1" value="0" playFieldID="-1" mod="beatz" modClass="beat" color="#545454" name="beatZ"/>
+		<Shader camHUD="true" shader="BloomEffect" camGame="true" camOther="false" color="#FFFFFF" name="bloom2">
+			<Property name="contrast" value="1"/>
+			<Property name="strength" value="0"/>
+			<Property name="effect" value="0"/>
+			<Property name="brightness" value="0"/>
 		</Shader>
-		<Shader camHUD="false" camOther="false" camGame="true" shader="MirrorRepeatEffect" name="mirror" color="#FF0000">
-			<Property value="0" name="warp"/>
-			<Property value="0" name="x"/>
-			<Property value="0" name="y"/>
-			<Property value="0" name="angleRange"/>
-			<Property value="-30" name="angle"/>
-			<Property value="1" name="zoom"/>
-			<Property value="0" name="yRange"/>
-			<Property value="0" name="xRange"/>
-			<Property value="0" name="iTime"/>
-			<Property value="1" name="speed"/>
+		<Shader camHUD="false" shader="MirrorRepeatEffect" camGame="true" camOther="false" color="#FF0000" name="mirror">
+			<Property name="warp" value="0"/>
+			<Property name="x" value="0"/>
+			<Property name="y" value="0"/>
+			<Property name="angleRange" value="0"/>
+			<Property name="angle" value="-30"/>
+			<Property name="zoom" value="1"/>
+			<Property name="yRange" value="0"/>
+			<Property name="xRange" value="0"/>
+			<Property name="iTime" value="0"/>
+			<Property name="speed" value="1"/>
 		</Shader>
 	</Init>
 	<Events>
 		<Event step="0" time="32" value="0" property="angle" ease="cubeOut" type="tweenShaderProperty" startValue="-30" name="mirror"/>
-		<Event step="16" time="4" value="4" property="value" ease="cubeInOut" type="tweenModifierValue" startValue="2" name="drunk"/>
-		<Event step="32" time="20" value="720" property="y" ease="cubeInOut" type="tweenModifierValue" startValue="0" name="rotate"/>
+		<Event step="16" time="4" value="1" ease="cubeInOut" type="tweenModPercent" startValue="0" name="beatZ"/>
+		<Event step="32" time="16" value="2" ease="cubeInOut" type="tweenModPercent" startValue="1" name="tipsy"/>
+		<Event step="48" time="20" value="360" ease="cubeInOut" type="tweenModPercent" startValue="0" name="centerRotateY"/>
+		<Event step="64" time="20" value="180" ease="cubeInOut" type="tweenModPercent" startValue="0" name="centerRotateX"/>
 		<Event step="88" type="addHUDZoom" value="0.11"/>
 		<Event step="112" time="8" value="3" property="zoom" ease="cubeOut" type="tweenShaderProperty" startValue="1" name="mirror"/>
 		<Event step="120" time="8" value="1" property="zoom" ease="cubeIn" type="tweenShaderProperty" startValue="3" name="mirror"/>

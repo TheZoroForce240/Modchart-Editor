@@ -844,16 +844,6 @@ function addEvent(step, item) {
 	var e = callEventScriptFromItem(item, "createEventEditor", [item.name, step, item]);
 	if (e != null) {
 		SortedArrayUtil.addSorted(events, e, function(n){return n.step;});
-
-		/*
-		var obj = new EventObject(e);
-		obj.timelineIndex = timelineItems.indexOf(item);
-		obj.x = e.step * ROW_SIZE_X;
-		obj.y = obj.timelineIndex * ROW_SIZE_Y;
-		obj.cameras = [camTimeline];
-		eventGroup.addSorted(obj); 
-		obj.updateEvent();
-		*/
 		refreshEventTimings();
 
 		editEvent(e, true);
@@ -886,8 +876,6 @@ function editEvent(e, justPlaced:Bool) {
 	FlxG.sound.music.pause();
 	vocals.pause();
 	openSubState(win);
-
-	//selectEvent(e, true);
 }
 
 function loadSong() {
@@ -966,14 +954,6 @@ function loadEvents(reload) {
 
 	if (reload) {
 		createTimelineUI();
-
-		/*
-		for(i in 0...eventGroup.members.length) {
-			var obj = eventGroup.members[i];
-			var n = callEventScriptFromEvent(obj.event, "getItemName", [obj.event]);
-			obj.timelineIndex = timelineList.indexOf(n);
-		}
-		*/
 	}
 }
 
@@ -1080,10 +1060,6 @@ function createEventObjects() {
 var lastStep = Math.NEGATIVE_INFINITY;
 function updateEvents(?forceStep:Float = null) {
 
-	for (item in timelineItems) {
-		//item.currentValue = item.defaultValue;
-	}
-
 	var currentStep = curStepFloat;
 	if (!FlxG.sound.music.playing) {
 		currentStep = conductorSprY / ROW_SIZE_X;
@@ -1132,8 +1108,6 @@ function updateEvents(?forceStep:Float = null) {
 		if (i != index) {
 			eventIndexList[itemIndex] = i;
 		}
-
-		
 
 		var e = events[i];
 		if (currentStep >= e.step) {
