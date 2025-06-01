@@ -983,8 +983,6 @@ function resetValuesToDefault() {
 	}
 }
 
-
-
 function refreshEventTimings() {
 	eventIndexList = [];
 
@@ -1018,6 +1016,46 @@ function refreshEventTimings() {
 			if (events[lastIndex].DI_value != null && events[lastIndex].DI_value)
 				e.lastValue = -e.lastValue;
 
+			eventIndexList[itemIndex] = i;
+		}
+	}
+
+	//force update current event indexes
+	var currentStep = curStepFloat;
+	if (!FlxG.sound.music.playing) {
+		currentStep = conductorSprY / ROW_SIZE_X;
+	}
+	for (itemIndex => index in eventIndexList) {
+		var i = index;
+		if (events[i] == null) continue;
+
+		if (events[i].nextIndex != -1) {
+			while(true) {
+				var nextIndex = events[i].nextIndex;
+				if (currentStep >= events[nextIndex].step) {
+					i = nextIndex;
+					if (events[i].nextIndex == -1) {
+						break;
+					}
+				} else {
+					break;
+				}
+			}
+		}
+		if (events[i].lastIndex != -1) {
+			while(true) {
+				var lastIndex = events[i].lastIndex;
+				if (currentStep < events[lastIndex].step + (events[lastIndex].time != null ? events[lastIndex].time : 0.0)) {
+					i = lastIndex;
+					if (events[i].lastIndex == -1) {
+						break;
+					}
+				} else {
+					break;
+				}
+			}
+		}
+		if (i != index) {
 			eventIndexList[itemIndex] = i;
 		}
 	}
