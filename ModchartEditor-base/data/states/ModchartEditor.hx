@@ -947,7 +947,12 @@ function loadEvents(reload) {
 				var eventType = event.get("type");
 				if (eventScripts.exists(eventType)) {
 					var e = eventScripts.get(eventType).call("eventFromXMLEditor", [event]);
-					events.push(e);
+					var n = callEventScriptFromEvent(e, "getItemName", [e]);
+					if (timelineIndexMap.exists(n)) {
+						events.push(e);
+					} else {
+						trace("skipping event for \"" + n + "\"");
+					}
 				}
 			}
 		}

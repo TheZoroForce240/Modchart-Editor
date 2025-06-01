@@ -117,7 +117,7 @@ function onFlipScroll(isDownscroll) {
 //edit menu stuff
 function isEditable() { return true; }
 function getXMLNodeName() {return "Modifier";}
-function getEditButtonText() { return "Add Note Modifier"; }
+function getEditButtonText() { return "Add GPU Note Modifier"; }
 
 function setupItemData(data, node) {
     data.file = node.get("modifier");
