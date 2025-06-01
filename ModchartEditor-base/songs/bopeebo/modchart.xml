@@ -18,14 +18,6 @@
 			<Property value="0" name="iTime"/>
 			<Property value="1" name="speed"/>
 		</Shader>
-		<Modifier strumID="-1" strumLineID="1" value="3" name="rotate" modifier="strumLineRotate" color="#FF00FF">
-			<SubMod value="0" name="z"/>
-			<SubMod value="0" name="x"/>
-			<SubMod value="0" name="y"/>
-		</Modifier>
-		<Modifier strumID="-1" strumLineID="-1" value="2" name="drunk" modifier="drunk" color="#00FF00">
-			<SubMod value="4" name="speed"/>
-		</Modifier>
 	</Init>
 	<Events>
 		<Event step="0" time="32" value="0" property="angle" ease="cubeOut" type="tweenShaderProperty" startValue="-30" name="mirror"/>

@@ -133,6 +133,7 @@ function setupEventWindow(event, propertyMap, windowData) {
     windowData.curX += 65;
 
     windowData.curY += 100;
+    //TODO: change to textbox instead
     var dropdown = new UIDropDown(windowData.windowSpr.x+(windowData.windowSpr.bWidth/2)-150, windowData.curY, 320, 32, easeList, easeList.indexOf(event.ease));
     propertyMap.set("ease", dropdown);
     var changeEaseFunc = windowData.changeEaseFunc;

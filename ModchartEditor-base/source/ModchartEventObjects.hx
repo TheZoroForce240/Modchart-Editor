@@ -202,7 +202,6 @@ class EventObject extends funkin.editors.ui.UISprite {
 
 	public function updateLength(size:Float) {
 		sustainSpr.scale.set(0,0);
-		//TODO: fix this shit so its separate
 		if (event.type == "tweenShaderProperty" || event.type == "tweenModifierValue") {
 			sustainSpr.scale.set((event.time*size), 20);
 			sustainSpr.updateHitbox();
