@@ -5,6 +5,13 @@ import funkin.editors.ui.UINumericStepper;
 import funkin.editors.ui.UIDropDown;
 import funkin.editors.ui.UIButton;
 import funkin.editors.ui.UICheckbox;
+
+import funkin.backend.system.macros.DefinesMacro;
+if (!DefinesMacro.defines.exists("funkin-modchart")) {
+    trace("FunkinModchart not found, skipping Event Script for: tweenModPercent");
+    return;
+}
+
 import modchart.Manager;
 
 trace("Loaded Event Script: tweenModPercent");

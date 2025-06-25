@@ -7,6 +7,7 @@ import funkin.editors.ui.UIDropDown;
 import funkin.editors.ui.UIButton;
 import funkin.editors.ui.UISprite;
 import haxe.io.Path;
+import haxe.io.Bytes;
 import funkin.editors.ui.UICheckbox;
 import funkin.editors.ui.UIColorwheel;
 import funkin.editors.ui.UIWindow;
@@ -80,12 +81,26 @@ function setupItemsFromXMLEditor(xml) {
         });
     }
 }
-function copyXMLItems(xml, output) {
+function copyXMLItems(xml, output, package) {
     for (e in xml.elementsNamed("Shader")) {
 
         var event = Xml.createElement("Shader");
         for (att in e.attributes()) {
             event.set(att, e.get(att));
+        }
+
+        if (package) {
+            var path = "shaders/modcharts/" + event.get("shader");
+            if (Assets.exists(path+".frag")) {
+                event.set("fragCode", Bytes.ofString(Assets.getText(path+".frag")).toHex()); //ensures that shader code wont break xml parsing
+            } else {
+                event.set("fragCode", "");
+            }
+            if (Assets.exists(path+".vert")) {
+                event.set("vertCode", Bytes.ofString(Assets.getText(path+".vert")).toHex());
+            } else {
+                event.set("vertCode", "");
+            }
         }
 
         for (node in e.elementsNamed("Property")) {

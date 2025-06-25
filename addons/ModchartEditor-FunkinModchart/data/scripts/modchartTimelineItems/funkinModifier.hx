@@ -15,6 +15,12 @@ import funkin.editors.ui.UIAutoCompleteTextBox;
 import funkin.backend.utils.IniUtil;
 import Xml;
 
+import funkin.backend.system.macros.DefinesMacro;
+if (!DefinesMacro.defines.exists("funkin-modchart")) {
+    trace("FunkinModchart not found, skipping Item Script for: funkinModifier");
+    return;
+}
+
 import modchart.Manager;
 import modchart.core.ModifierGroup;
 import modchart.standalone.Adapter;
@@ -30,35 +36,15 @@ function getEventNameFromItem(item) {
 }
 
 var setup = false;
-function setupDefaultsEditor() {
-    if (!setup) {
-        
-        
-        var funkin_modchart_instance = new Manager();
-        //funkin_modchart_instance.setPercent("arrowPathDivisions", 4, -1); //shit is way too slow
-        //funkin_modchart_instance.renderArrowPaths = true;
-        Adapter.instance = new EditorAdapter();
-        Adapter.instance.onModchartingInitialization();
-        Adapter.instance.downscroll = downscroll;
-        Adapter.instance.strumLines = strumLines;
-        Adapter.instance.camHUD = camHUD;
-        Adapter.instance.scrollSpeed = PlayState.SONG.scrollSpeed;
-        add(funkin_modchart_instance);
-
-        setup = true;
-    }
-}
-function setupDefaultsGame() {
-    if (!setup) {
-        Adapter.instance = new Codename();
-        var funkin_modchart_instance = new Manager();
-        add(funkin_modchart_instance);
-        setup = true;
-    }
-}
 
 function setupItemsFromXMLGame(xml) {
     for (node in xml.elementsNamed("FunkinModifier")) {
+        if (!setup) {
+            Adapter.instance = new Codename();
+            var funkin_modchart_instance = new Manager();
+            add(funkin_modchart_instance);
+            setup = true;
+        }
     
         var item = createModchartItem(node.get("name"), node.get("mod"), "funkinModifier", Std.parseFloat(node.get("value")), node.get("mod"));
         item.strumLineID = Std.parseInt(node.get("strumLineID"));
@@ -73,6 +59,19 @@ function setupItemsFromXMLGame(xml) {
 
 function setupItemsFromXMLEditor(xml) {
     for (node in xml.elementsNamed("FunkinModifier")) {
+         if (!setup) {
+            var funkin_modchart_instance = new Manager();
+            //funkin_modchart_instance.setPercent("arrowPathDivisions", 4, -1); //shit is way too slow
+            //funkin_modchart_instance.renderArrowPaths = true;
+            Adapter.instance = new EditorAdapter();
+            Adapter.instance.onModchartingInitialization();
+            Adapter.instance.downscroll = downscroll;
+            Adapter.instance.strumLines = strumLines;
+            Adapter.instance.camHUD = camHUD;
+            Adapter.instance.scrollSpeed = PlayState.SONG.scrollSpeed;
+            add(funkin_modchart_instance);
+            setup = true;
+        }
         var tlStartIndex = timelineList.length;
 
         var item = createTimelineItem(node.get("name"), "funkinModifier", node.get("mod"));
@@ -95,7 +94,7 @@ function setupItemsFromXMLEditor(xml) {
     }
 }
 
-function copyXMLItems(xml, output) {
+function copyXMLItems(xml, output, package) {
     for (e in xml.elementsNamed("FunkinModifier")) {
 
         var event = Xml.createElement("FunkinModifier");

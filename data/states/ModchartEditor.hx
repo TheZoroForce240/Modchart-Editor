@@ -27,6 +27,7 @@ import flixel.group.FlxSpriteGroup;
 import haxe.xml.Printer;
 import funkin.game.Stage;
 import funkin.backend.MusicBeatGroup;
+import funkin.editors.EditorTreeMenu;
 import Xml;
 import ModchartEventObjects;
 import UIScrollBarHorizontal;
@@ -227,14 +228,18 @@ function postCreate() {
 					keybind: [FlxKey.CONTROL, FlxKey.S],
 					onSelect: _save
 				},
-				{
+				/*{
 					label: "Save (Optimized)",
 					onSelect: _save_opt
+				},*/
+				null,
+				{
+					label: "Export Packaged Modchart",
+					onSelect: _export_package
 				},
 				null,
 				{
 					label: "Exit",
-					keybind: [FlxKey.ESCAPE],
 					onSelect: _exit
 				}
 			]
@@ -1172,7 +1177,8 @@ function updateEvents(?forceStep:Float = null) {
 }
 
 
-function buildXMLFromEvents(?newInitEvents = null) {
+function buildXMLFromEvents(?newInitEvents = null, ?package = false) {
+	if (package == null) package = false;
 	var newXml = Xml.createElement("Modchart");
 	var initEvents = newInitEvents == null ? Xml.createElement("Init") : newInitEvents;
 	var xmlEvents = Xml.createElement("Events");
@@ -1181,7 +1187,7 @@ function buildXMLFromEvents(?newInitEvents = null) {
 	if (xml != null && newInitEvents == null) {
 		for (list in xml.elementsNamed("Init")) {
 			for (name => script in itemScripts) {
-				script.call("copyXMLItems", [list, initEvents]);
+				script.call("copyXMLItems", [list, initEvents, package]);
 			}
 		}
 	}
@@ -1221,8 +1227,14 @@ function _save_opt() {
 	}
 	CoolUtil.safeSaveFile(path, Printer.print(xml, false));
 }
+function _export_package() {
+	var packagedXML = buildXMLFromEvents(null, true);
+	CoolUtil.safeSaveFile("testpackage.xml", Printer.print(packagedXML, true));
+}
 function _exit() {
-	FlxG.switchState(new FreeplayState());
+	var state = new EditorTreeMenu();
+	state.scriptName = "ModchartEditorSongSelectState";
+	FlxG.switchState(state);
 }
 function _modchart_edititems() {
 	CURRENT_XML = xml;
