@@ -681,6 +681,8 @@ function update(elapsed) {
 	camHUD.zoom = CoolUtil.fpsLerp(camHUD.zoom, 1, 0.05);
 
 	updateEvents();
+
+	eventRenderer.events = events;
 }
 
 function updateUI() {
@@ -1177,8 +1179,8 @@ function updateEvents(?forceStep:Float = null) {
 }
 
 
-function buildXMLFromEvents(?newInitEvents = null, ?package = false) {
-	if (package == null) package = false;
+function buildXMLFromEvents(?newInitEvents = null, ?packaged = false) {
+	if (packaged == null) packaged = false;
 	var newXml = Xml.createElement("Modchart");
 	var initEvents = newInitEvents == null ? Xml.createElement("Init") : newInitEvents;
 	var xmlEvents = Xml.createElement("Events");
@@ -1187,7 +1189,7 @@ function buildXMLFromEvents(?newInitEvents = null, ?package = false) {
 	if (xml != null && newInitEvents == null) {
 		for (list in xml.elementsNamed("Init")) {
 			for (name => script in itemScripts) {
-				script.call("copyXMLItems", [list, initEvents, package]);
+				script.call("copyXMLItems", [list, initEvents, packaged]);
 			}
 		}
 	}
@@ -1305,9 +1307,9 @@ function _playback_play() {
 		vocals.pause();
 		//for (strumLine in strumLines.members) strumLine.vocals.pause();
 	} else {
-		FlxG.sound.music.play();
-		vocals.play();
-		vocals.time = FlxG.sound.music.time = Conductor.songPosition + Conductor.songOffset * 2;
+		FlxG.sound.music.play(true, Conductor.songPosition + Conductor.songOffset);
+		vocals.play(true, FlxG.sound.music.getActualTime());
+		//vocals.time = FlxG.sound.music.time = Conductor.songPosition + Conductor.songOffset * 2;
 		//for (strumLine in strumLines.members) {
 		//	strumLine.vocals.play();
 		//	strumLine.vocals.time = vocals.time;

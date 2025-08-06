@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<language>
+	<group name="EditorPicker" prefix="editor.">
+		<str id="modchart-editor.name">Modchart Editor</str>
+	</group>
+</language>

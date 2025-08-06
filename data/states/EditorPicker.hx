@@ -12,6 +12,7 @@ function create()
 	options.push(
 		{
 			name: "Modchart Editor",
+			id: "modchart-editor",
 			iconID: 0,
 			state: EditorTreeMenu
 		}
@@ -28,7 +29,7 @@ function postUpdate(elapsed)
 		{
 			didSelect = true;
 			if (curSelected == modchartEditorID)
-				overrideStateLoad("ModchartEditorSongSelectState");
+				overrideStateLoad("ModchartEditorSelection");
 		}
 	}
 

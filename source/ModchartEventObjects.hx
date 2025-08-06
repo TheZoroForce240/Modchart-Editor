@@ -56,6 +56,8 @@ class EventRenderer extends funkin.editors.ui.UISprite {
 	public var sizeY:Float = 20;
 	public var _timelineScrollY:Float = 0;
 
+	public var events = [];
+
 	public function getVarForEachAdd(e:Dynamic) {
 		return e.step + (e.time != null ? e.time : 0);
 	}

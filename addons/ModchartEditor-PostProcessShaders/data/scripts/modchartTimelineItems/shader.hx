@@ -81,7 +81,7 @@ function setupItemsFromXMLEditor(xml) {
         });
     }
 }
-function copyXMLItems(xml, output, package) {
+function copyXMLItems(xml, output, packaged) {
     for (e in xml.elementsNamed("Shader")) {
 
         var event = Xml.createElement("Shader");
@@ -89,7 +89,7 @@ function copyXMLItems(xml, output, package) {
             event.set(att, e.get(att));
         }
 
-        if (package) {
+        if (packaged) {
             var path = "shaders/modcharts/" + event.get("shader");
             if (Assets.exists(path+".frag")) {
                 event.set("fragCode", Bytes.ofString(Assets.getText(path+".frag")).toHex()); //ensures that shader code wont break xml parsing
