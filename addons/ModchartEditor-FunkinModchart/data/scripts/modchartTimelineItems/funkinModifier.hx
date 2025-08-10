@@ -22,8 +22,9 @@ if (!DefinesMacro.defines.exists("funkin-modchart")) {
 }
 
 import modchart.Manager;
-import modchart.core.ModifierGroup;
-import modchart.standalone.Adapter;
+import modchart.Config;
+import modchart.engine.modifiers.ModifierGroup;
+import modchart.backend.standalone.Adapter;
 import EditorAdapter;
 
 trace("Loaded Item Script: funkinModifier");
@@ -60,15 +61,16 @@ function setupItemsFromXMLGame(xml) {
 function setupItemsFromXMLEditor(xml) {
     for (node in xml.elementsNamed("FunkinModifier")) {
          if (!setup) {
-            var funkin_modchart_instance = new Manager();
-            //funkin_modchart_instance.setPercent("arrowPathDivisions", 4, -1); //shit is way too slow
-            //funkin_modchart_instance.renderArrowPaths = true;
-            Adapter.instance = new EditorAdapter();
-            Adapter.instance.onModchartingInitialization();
-            Adapter.instance.downscroll = downscroll;
-            Adapter.instance.strumLines = strumLines;
-            Adapter.instance.camHUD = camHUD;
-            Adapter.instance.scrollSpeed = PlayState.SONG.scrollSpeed;
+			var funkin_modchart_instance = new Manager();
+			Adapter.instance = new EditorAdapter().superClass;
+        	Adapter.instance.onModchartingInitialization();
+			Adapter.instance.downscroll = downscroll;
+        	Adapter.instance.strumLines = strumLines;
+        	Adapter.instance.camHUD = camHUD;
+        	Adapter.instance.scrollSpeed = PlayState.SONG.scrollSpeed;
+			//Adapter.instance = new EditorAdapter();
+           
+            Config.RENDER_ARROW_PATHS = true;
             add(funkin_modchart_instance);
             setup = true;
         }

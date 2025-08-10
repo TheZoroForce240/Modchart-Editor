@@ -1,16 +1,17 @@
 //
-import modchart.standalone.adapters.codename.Codename;
+import modchart.backend.standalone.adapters.codename.Codename;
 
-class EditorAdapter extends modchart.standalone.adapters.codename.Codename {
+class EditorAdapter extends modchart.backend.standalone.adapters.codename.Codename {
     public var downscroll = false;
     public var strumLines = [];
     public var camHUD = null;
     public var scrollSpeed = 2.0;
 
-	public function new() {}
+	public function new() {super();}
 
-	public function onModchartingInitialization() {
+	override public function onModchartingInitialization() {
 		__fCrochet = Conductor.crochet;
+		trace("called from onModchartingInitialization");
 	}
 
 	public function isTapNote(sprite:FlxSprite) {
@@ -25,6 +26,10 @@ class EditorAdapter extends modchart.standalone.adapters.codename.Codename {
 	public function getCurrentBeat():Float {
 		return Conductor.curBeatFloat;
 	}
+
+	public function getCurrentCrochet():Float {
+		return Conductor.crochet;
+	}	
 
 	public function getStaticCrochet():Float {
 		return __fCrochet;
@@ -50,6 +55,10 @@ class EditorAdapter extends modchart.standalone.adapters.codename.Codename {
         for (i => group in strumLines) {
             if (group.contains(arrow)) return i;
         }
+		return 0;
+	}
+
+	public function getHoldLength(item:FlxSprite):Float {
 		return 0;
 	}
 
