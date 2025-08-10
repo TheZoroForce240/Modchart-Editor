@@ -11,7 +11,6 @@ class EditorAdapter extends modchart.backend.standalone.adapters.codename.Codena
 
 	override public function onModchartingInitialization() {
 		__fCrochet = Conductor.crochet;
-		trace("called from onModchartingInitialization");
 	}
 
 	public function isTapNote(sprite:FlxSprite) {
