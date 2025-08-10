@@ -10,7 +10,7 @@ class EditorAdapter extends modchart.backend.standalone.adapters.codename.Codena
 	public function new() {super();}
 
 	override public function onModchartingInitialization() {
-		__fCrochet = Conductor.crochet;
+		//__fCrochet = Conductor.crochet;
 	}
 
 	public function isTapNote(sprite:FlxSprite) {
@@ -18,25 +18,25 @@ class EditorAdapter extends modchart.backend.standalone.adapters.codename.Codena
 	}
 
 	// Song related
-	public function getSongPosition():Float {
-		return Conductor.songPosition;
-	}
+	//public function getSongPosition():Float {
+	//	return Conductor.songPosition;
+	//}
 
-	public function getCurrentBeat():Float {
-		return Conductor.curBeatFloat;
-	}
+	//public function getCurrentBeat():Float {
+	//	return Conductor.curBeatFloat;
+	//}
 
-	public function getCurrentCrochet():Float {
-		return Conductor.crochet;
-	}	
+	//public function getCurrentCrochet():Float {
+	//	return Conductor.crochet;
+	//}	
 
-	public function getStaticCrochet():Float {
-		return __fCrochet;
-	}
+	//public function getStaticCrochet():Float {
+	//	return __fCrochet;
+	//}
 
-	public function getBeatFromStep(step:Float):Float {
-		return step * Conductor.stepsPerBeat;
-	}
+	//public function getBeatFromStep(step:Float):Float {
+	//	return step * Conductor.stepsPerBeat;
+	//}
 
 	public function arrowHit(arrow:FlxSprite) {
 		return false;

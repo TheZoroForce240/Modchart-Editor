@@ -61,16 +61,18 @@ function setupItemsFromXMLGame(xml) {
 function setupItemsFromXMLEditor(xml) {
     for (node in xml.elementsNamed("FunkinModifier")) {
          if (!setup) {
-			var funkin_modchart_instance = new Manager();
 			Adapter.instance = new EditorAdapter().superClass;
-        	Adapter.instance.onModchartingInitialization();
+			var funkin_modchart_instance = new Manager();
+			
 			Adapter.instance.downscroll = downscroll;
         	Adapter.instance.strumLines = strumLines;
         	Adapter.instance.camHUD = camHUD;
         	Adapter.instance.scrollSpeed = PlayState.SONG.scrollSpeed;
-			//Adapter.instance = new EditorAdapter();
+
+			funkin_modchart_instance.playfieldCount = 0; //need to recreate the playfield, stops it from crashing for now
+			funkin_modchart_instance.addPlayfield();
            
-            Config.RENDER_ARROW_PATHS = true;
+            //Config.RENDER_ARROW_PATHS = true; //TODO: add option for this
             add(funkin_modchart_instance);
             setup = true;
         }
@@ -153,7 +155,7 @@ function setupDefaultItemData(data) {
 function getAvailableFiles() {
     var files = [];
 
-    for (name => cl in ModifierGroup.GLOBAL_MODIFIERS) {
+    for (name => cl in ModifierGroup.COMPILED_MODIFIERS) {
         files.push(name);
     }
     
